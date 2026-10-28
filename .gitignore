@@ -1,0 +1,30 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- 环境变量（含密钥，禁止入库）----
+.env
+.streamlit/secrets.toml
+
+# ---- 作业原始材料 ----
+作业要求.txt
+CLAUDE.md
+
+# ---- 导出的面试报告 ----
+workspace/*
+!workspace/.gitkeep
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# ---- 测试与缓存 ----
+.pytest_cache/
+.coverage
+htmlcov/
