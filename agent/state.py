@@ -37,14 +37,16 @@ class ResumeProfile(BaseModel):
 
 class Competency(BaseModel):
     name: str
-    weight: float = Field(ge=0, le=1)
+    weight: float = Field(ge=0, description="相对重要度；不要求模型归一化，由代码统一归一")
     required_level: int = Field(ge=0, le=5, description="岗位要求的熟练度 0-5")
     resume_level: int = Field(ge=0, le=5, description="简历体现出的熟练度 0-5")
 
 
 class CompetencyModel(BaseModel):
     role_title: str
-    competencies: list[Competency] = Field(min_length=3, max_length=7)
+    competencies: list[Competency] = Field(
+        min_length=1, description="提示词要求 3-7 项；过多由代码截断，避免校验失败空转"
+    )
 
 
 class Rubric(BaseModel):
@@ -74,6 +76,16 @@ class Slot(BaseModel):
 
 class InterviewPlan(BaseModel):
     slots: list[Slot]
+
+
+class TurnDecision(BaseModel):
+    """面试官一次调用的双重产出：给上一题打分 + 出下一题。"""
+
+    score: AnswerScore | None = Field(
+        default=None, description="上一题的打分；若是第一题则为 null"
+    )
+    question: Question | None = Field(default=None, description="下一题；本次为最后一题则为 null")
+    is_followup: bool = Field(default=False, description="下一题是否是对上一题的追问")
 
 
 class Turn(BaseModel):
