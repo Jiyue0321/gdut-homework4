@@ -22,7 +22,7 @@ def render_report(session, tools, *, export_name: str = "面试复盘报告.md")
     measured = {name: float(v) for name, v in (data.get("dimensions") or {}).items()}
     figure = radar_chart(session.radar, measured)
     if figure is not None:
-        st.plotly_chart(figure, use_container_width=True)
+        st.plotly_chart(figure, width='stretch')
         st.caption("三条线分别为岗位要求、简历自评与面试实测；实测线明显低于要求的能力就是下一步要补的。")
 
     if session.cross_exam:
@@ -71,7 +71,7 @@ def _render_export(session, tools, default_name: str) -> None:
         data=markdown.encode("utf-8"),
         file_name=default_name,
         mime="text/markdown",
-        use_container_width=True,
+        width='stretch',
     )
     with st.expander("在页面上查看完整报告"):
         st.markdown(markdown)
@@ -79,6 +79,6 @@ def _render_export(session, tools, default_name: str) -> None:
 
 def render_error(message: str) -> None:
     st.error(message)
-    if st.button("返回重新开始", use_container_width=True):
+    if st.button("返回重新开始", width='stretch'):
         st.session_state.pop("session", None)
         st.rerun()

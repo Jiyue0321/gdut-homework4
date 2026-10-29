@@ -42,7 +42,7 @@ def setup_form() -> tuple[str, str, str] | None:
     st.subheader("第一步 · 让面试官认识你")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("填入示例简历", use_container_width=True):
+        if st.button("填入示例简历", width='stretch'):
             st.session_state.resume_text = SAMPLE_RESUME
         resume_text = st.text_area(
             "简历正文",
@@ -51,7 +51,7 @@ def setup_form() -> tuple[str, str, str] | None:
             placeholder="把简历复制粘贴到这里，建议保留项目经历里的数字。",
         )
     with col2:
-        if st.button("填入示例 JD", use_container_width=True):
+        if st.button("填入示例 JD", width='stretch'):
             st.session_state.jd_text = SAMPLE_JD
         jd_text = st.text_area(
             "岗位 JD",
@@ -68,7 +68,7 @@ def setup_form() -> tuple[str, str, str] | None:
     if not ready:
         st.info("填写简历和 JD 后即可开始面试。")
         return None
-    if st.button("开始面试", type="primary", use_container_width=True):
+    if st.button("开始面试", type="primary", width='stretch'):
         return resume_text, jd_text, role_title.strip() or "目标岗位"
     return None
 
@@ -169,8 +169,13 @@ def interview_body(session) -> str | None:
         st.error(session.error)
 
     with st.form(key=f"answer_{len(session.turns)}", clear_on_submit=True):
-        answer = st.text_area("你的回答", height=140, placeholder="建议用 STAR 结构：背景 → 任务 → 行动 → 结果")
-        submitted = st.form_submit_button("提交回答", type="primary", use_container_width=True)
+        answer = st.text_area(
+            "你的回答",
+            key=f"answer_input_{len(session.turns)}",
+            height=140,
+            placeholder="建议用 STAR 结构：背景 → 任务 → 行动 → 结果",
+        )
+        submitted = st.form_submit_button("提交回答", type="primary", width='stretch')
     if submitted:
         if not answer.strip():
             st.warning("回答不能为空。")

@@ -61,7 +61,7 @@ def main() -> None:
 
     if session.phase in {Phase.REPORT, Phase.DONE}:
         report.render_report(session, tools)
-        if st.button("再面一次", use_container_width=True):
+        if st.button("再面一次", width='stretch'):
             st.session_state.pop("session", None)
             st.session_state.pop("orchestrator", None)
             st.rerun()
