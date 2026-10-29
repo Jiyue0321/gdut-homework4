@@ -93,6 +93,33 @@ def test_render_report_md_contains_sections():
     assert "启发式参考" in md
 
 
+def test_render_report_md_includes_cross_exam_table():
+    report = {
+        "role_title": "后端开发实习生",
+        "overall_score": 3.0,
+        "verdict": "基本达标",
+        "dimensions": {},
+        "cross_exam": {
+            "question": "你怎么保证幂等？",
+            "scores": {
+                "hr": {"overall": 2, "comment": "没听清动机"},
+                "tech": {"overall": 4, "comment": "方案可行"},
+                "pressure": {"overall": 3, "comment": "论据一般"},
+            },
+            "merged": {"overall": 3},
+        },
+    }
+    md = toolkit.render_report_md(report)
+    assert "## 交叉拷问" in md
+    assert "| 技术面试官 | 4 / 5 | 方案可行 |" in md
+    assert "综合中位数：**3 / 5**" in md
+
+
+def test_render_report_md_skips_cross_exam_when_absent():
+    md = toolkit.render_report_md({"role_title": "岗位", "overall_score": 3.0})
+    assert "## 交叉拷问" not in md
+
+
 def test_export_report_writes_into_workspace(tmp_path, monkeypatch):
     monkeypatch.setattr(toolkit, "resolve_safe", lambda name: tmp_path / name)
     monkeypatch.setattr(toolkit, "display_path", lambda p: p.name)

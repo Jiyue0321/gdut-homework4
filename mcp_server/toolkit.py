@@ -144,6 +144,8 @@ def render_report_md(report: Mapping[str, Any]) -> str:
                 lines.append(f"- 评语：{turn['comment']}")
             lines.append("")
 
+    _append_cross_exam(lines, report.get("cross_exam"))
+
     for key, heading in (
         ("strengths", "## 优势"),
         ("improvements", "## 待改进"),
@@ -168,6 +170,27 @@ def render_report_md(report: Mapping[str, Any]) -> str:
     lines.append("")
     lines.append("由「面面俱到」模拟面试多智能体生成，评分为启发式参考，不构成招聘结论。")
     return "\n".join(lines)
+
+
+def _append_cross_exam(lines: list[str], cross_exam: Mapping[str, Any] | None) -> None:
+    if not cross_exam:
+        return
+    scores = cross_exam.get("scores") or {}
+    merged = cross_exam.get("merged") or {}
+    lines.append("## 交叉拷问")
+    lines.append("")
+    lines.append(f"针对最弱的一题：{cross_exam.get('question', '')}")
+    lines.append("")
+    lines.append("| 面试官 | 得分 | 评语 |")
+    lines.append("| --- | --- | --- |")
+    for agent, label in (("hr", "HR 面试官"), ("tech", "技术面试官"), ("pressure", "压力面试官")):
+        score = scores.get(agent)
+        if not isinstance(score, Mapping):
+            continue
+        lines.append(f"| {label} | {score.get('overall', '-')} / 5 | {score.get('comment', '')} |")
+    lines.append("")
+    lines.append(f"综合中位数：**{merged.get('overall', '-')} / 5**")
+    lines.append("")
 
 
 def _level_label(score: float) -> str:

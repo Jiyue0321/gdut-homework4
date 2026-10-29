@@ -115,3 +115,54 @@ def test_report_page_renders_scores_and_export(app: AppTest):
     assert "加权总分" in labels
     assert any("下载复盘报告" in b.label for b in app.download_button)
     assert any("复盘报告" in h.value for h in app.subheader)
+
+
+def test_report_page_shows_cross_exam_and_improvements(app: AppTest):
+    app.text_area(key="resume_text").set_value(RESUME_TEXT)
+    app.text_area(key="jd_text").set_value(JD_TEXT)
+    app.run()
+    _button(app, "开始面试").click()
+    app.run()
+
+    for _ in range(12):
+        session = app.session_state["session"]
+        if session.phase.value in {"done", "report"}:
+            break
+        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("回答")
+        _button(app, "提交回答").click()
+        app.run()
+
+    session = app.session_state["session"]
+    assert session.cross_exam is not None
+    marks = [m.value for m in app.markdown]
+    headings = " ".join(marks)
+    assert "交叉拷问" in headings
+    assert "你的优势" in headings
+    assert "待改进" in headings
+    assert "行动清单" in headings
+
+    # 报告导出内容要覆盖交叉拷问与行动清单
+    markdown = LocalTools().render_report_md(session.report_data)
+    assert "## 交叉拷问" in markdown
+    assert "## 行动清单" in markdown
+
+
+def test_restart_button_returns_to_setup(app: AppTest):
+    app.text_area(key="resume_text").set_value(RESUME_TEXT)
+    app.text_area(key="jd_text").set_value(JD_TEXT)
+    app.run()
+    _button(app, "开始面试").click()
+    app.run()
+
+    for _ in range(12):
+        session = app.session_state["session"]
+        if session.phase.value in {"done", "report"}:
+            break
+        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("回答")
+        _button(app, "提交回答").click()
+        app.run()
+
+    _button(app, "再面一次").click()
+    app.run()
+    assert "session" not in app.session_state
+    assert any("填写简历和 JD" in info.value for info in app.info)
