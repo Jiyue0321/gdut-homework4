@@ -1,7 +1,7 @@
 # 软件需求规格说明书
 
 **项目名称**：面面俱到 · 模拟面试多智能体
-**文档版本**：V1.1
+**文档版本**：V1.2
 **编写日期**：2026-10-29
 **所属课程**：软件工程
 **团队仓库**：https://github.com/Jiyue0321/gdut-homework4
@@ -71,7 +71,8 @@
 | 3 | 2026-10-29 | V0.8 | 完成功能需求 F1–F8 与验收标准初稿 | 苏炜康 |
 | 4 | 2026-10-29 | V1.0 | 补充类图、数据字典、非功能需求 | 苏炜康 |
 | 5 | 2026-10-29 | V1.1 | 依据已实现功能复核全部验收标准，删除未实现项 | 苏炜康 |
-| 6 | 2026-11-05 | V2.0 | （待填）答辩前最终定稿 | （待填） |
+| 6 | 2026-10-30 | V1.2 | 适配腾讯文档：图表改为预渲染 PNG，类图拆分为编排图与数据模型图 | 苏炜康 |
+| 7 | 2026-11-05 | V2.0 | （待填）答辩前最终定稿 | （待填） |
 
 > **使用说明（交付前请删除本段）**：迭代记录表是「文档不是最后一天赶出来」的证据，
 > 请每完成一次真实修改就补一行，并如实填写日期与修改人。不要为了好看编造迭代次数。
@@ -98,8 +99,11 @@
 - **落地要求**：Logo 需提供 PNG（512×512）与 SVG 两版，用于 PPT 封面、网页 favicon 与报告页头。
   （本版本源码中已用 emoji 🎤 作为网页图标占位。）
 
-> **交付提示**：Logo 可用 Canva / 稿定设计 30 分钟内完成；思维导图与类图下方均为 Mermaid 源码，
-> 可直接粘贴到语雀的「Mermaid 绘图」块渲染，也可截图放进 PPT。
+> **交付提示**：Logo 可用 Canva / 稿定设计 30 分钟内完成。
+>
+> **关于本文档中的图**：腾讯文档不支持 Mermaid 语法，因此所有图表已**预先渲染成 PNG 图片**，
+> 存放在 `docs/diagrams/` 目录，直接插入腾讯文档即可。Mermaid 源文件（`.mmd`）同时保留，
+> 修改后用 `docs/diagrams/README.md` 里的命令重新渲染。
 
 ---
 
@@ -107,75 +111,21 @@
 
 ### 3.1 用户旅程
 
-```mermaid
-mindmap
-  root((面面俱到))
-    录入
-      粘贴简历
-      粘贴岗位JD
-      填写岗位名称
-    分析
-      简历结构化
-      岗位能力模型
-      缺口雷达
-    面试
-      HR面试官
-        动机与稳定性
-      技术面试官
-        项目细节深挖
-      压力面试官
-        质疑与情境
-      自适应追问
-    复盘
-      交叉拷问
-      加权评分
-      改进建议
-      导出报告
-```
+![用户旅程思维导图](diagrams/01-user-journey.png)
+
+> 源文件：`docs/diagrams/01-user-journey.mmd`
 
 ### 3.2 功能分解
 
-```mermaid
-mindmap
-  root((功能分解))
-    F1 简历录入与体检
-    F2 岗位能力分析
-    F3 缺口雷达
-    F4 多面试官提问
-    F5 自适应追问
-    F6 交叉拷问
-    F7 复盘报告
-    F8 报告导出
-    N1 大模型配置
-    N2 工具层可切换
-    N3 失败降级
-```
+![功能分解思维导图](diagrams/02-feature-tree.png)
+
+> 源文件：`docs/diagrams/02-feature-tree.mmd`
 
 ### 3.3 技术栈
 
-```mermaid
-mindmap
-  root((技术栈))
-    前端
-      Streamlit 1.66
-      Plotly 雷达图
-    编排
-      Python 3.13
-      确定性状态机
-    智能体
-      OpenAI 兼容接口
-      DeepSeek / Qwen / GLM
-      Pydantic 结构化输出
-    工具
-      MCP 2.3 stdio 子进程
-      确定性评分函数
-    质量
-      pytest 单元与集成
-      Streamlit AppTest
-    部署
-      Streamlit Cloud
-      GitHub 直连
-```
+![技术栈思维导图](diagrams/03-tech-stack.png)
+
+> 源文件：`docs/diagrams/03-tech-stack.mmd`
 
 ---
 
@@ -473,132 +423,35 @@ class TTS(Protocol):
 
 ### 8.1 类图
 
-```mermaid
-classDiagram
-    class Orchestrator {
-        -llm: ChatProvider
-        -tools: ToolProvider
-        -config: InterviewConfig
-        +start(resume, jd, role) InterviewSession
-        +answer(session, text) InterviewSession
-        -_build_plan(session)
-        -_should_followup(session, decision)
-        -_run_cross_exam(session)
-        -_evaluate_and_report(session)
-    }
+面试系统的类图按职责拆成两张：一张是**编排与智能体协作**（谁调用谁），
+一张是**数据模型**（会话里存了什么）。这样在腾讯文档里插入后字号仍然可读。
 
-    class InterviewSession {
-        +phase: Phase
-        +profile: ResumeProfile
-        +competency_model: CompetencyModel
-        +plan: InterviewPlan
-        +turns: list~Turn~
-        +cross_exam: CrossExam
-        +report_data: dict
-        +qa_pairs() list
-        +turn_records() list
-        +weights() dict
-    }
+#### 8.1.1 编排与智能体协作
 
-    class InterviewConfig {
-        +max_questions: int = 6
-        +allow_followups: bool = true
-        +run_cross_exam: bool = true
-    }
+![编排与智能体类图](diagrams/04a-class-orchestration.png)
 
-    class ChatProvider {
-        <<interface>>
-        +chat_json(messages, schema, kwargs) BaseModel
-    }
+> 源文件：`docs/diagrams/04a-class-orchestration.mmd`
+>
+> 读图要点：`Orchestrator` 依赖两个抽象——`ChatProvider`（大模型）与 `ToolProvider`（确定性工具），
+> 因此换模型或换 MCP/本地工具都不影响编排逻辑；五个智能体用虚线（依赖）连向编排器，
+> 表示它们是被调用的无状态函数，彼此不通信。
 
-    class ToolProvider {
-        <<interface>>
-        +check_resume_quality(text)
-        +match_competencies(comps)
-        +aggregate_scores(turns, weights)
-        +merge_cross_exam(scores)
-        +render_report_md(report)
-        +export_report(name, content)
-    }
+#### 8.1.2 数据模型
 
-    class LocalTools
-    class MCPTools
-    class MCPToolClient {
-        +call_tool_json(name, args)
-    }
+![数据模型类图](diagrams/04b-class-data.png)
 
-    class ResumeAnalyst {
-        +analyze_resume(client, text, quality) ResumeProfile
-    }
-    class JDAnalyst {
-        +analyze_jd(client, jd, role, profile) CompetencyModel
-    }
-    class InterviewerAgent {
-        +ask(client, slot, profile, role) TurnDecision
-    }
-    class Evaluator {
-        +evaluate(client, question, answer) AnswerScore
-        +cross_exam(client, agent, q, a) AnswerScore
-    }
-    class ReportWriter {
-        +write_report(client, data, turns) FinalReport
-    }
-
-    class rubric {
-        <<module>>
-        +clamp(v)
-        +normalize_weights(w)
-        +weighted_total(scores, weights)
-        +merge_cross_exam(scores)
-        +overall_verdict(total)
-    }
-
-    class ASR {
-        <<interface>>
-        +transcribe(audio) str
-    }
-    class TTS {
-        <<interface>>
-        +synthesize(text) bytes
-    }
-
-    Orchestrator --> InterviewSession
-    Orchestrator --> InterviewConfig
-    Orchestrator --> ChatProvider
-    Orchestrator --> ToolProvider
-    Orchestrator ..> ResumeAnalyst
-    Orchestrator ..> JDAnalyst
-    Orchestrator ..> InterviewerAgent
-    Orchestrator ..> Evaluator
-    Orchestrator ..> ReportWriter
-    ToolProvider <|.. LocalTools
-    ToolProvider <|.. MCPTools
-    MCPTools --> MCPToolClient
-    LocalTools ..> rubric
-    MCPTools ..> rubric
-    InterviewSession *-- ResumeProfile
-    InterviewSession *-- CompetencyModel
-    InterviewSession *-- InterviewPlan
-    InterviewSession *-- Turn
-    InterviewSession *-- CrossExam
-```
+> 源文件：`docs/diagrams/04b-class-data.mmd`
+>
+> 实心菱形（组合）表示整体与部分同生共死：会话结束时，其下的计划、轮次、交叉拷问一并丢弃。
 
 ### 8.2 面试状态机
 
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> PARSE_RESUME: start()
-    PARSE_RESUME --> ANALYZE_JD
-    ANALYZE_JD --> PLAN
-    PLAN --> INTERVIEW
-    INTERVIEW --> INTERVIEW: answer() 且未到题量上限
-    INTERVIEW --> CROSS_EXAM: 题量用完
-    CROSS_EXAM --> EVALUATE
-    EVALUATE --> REPORT
-    REPORT --> DONE
-    DONE --> [*]
-```
+![面试状态机](diagrams/05-state-machine.png)
+
+> 源文件：`docs/diagrams/05-state-machine.mmd`
+>
+> `INTERVIEW` 自环表示「未到题量上限就继续出题」；题量由 `InterviewConfig.max_questions` 控制（默认 6），
+> 追问不推进阶段。
 
 ### 8.3 模块划分
 

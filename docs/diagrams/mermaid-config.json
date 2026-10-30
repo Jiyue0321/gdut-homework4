@@ -1,0 +1,9 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontFamily": "Microsoft YaHei, SimHei, Noto Sans CJK SC, sans-serif",
+    "fontSize": "16px"
+  },
+  "flowchart": { "htmlLabels": true, "curve": "basis" },
+  "class": { "htmlLabels": true }
+}

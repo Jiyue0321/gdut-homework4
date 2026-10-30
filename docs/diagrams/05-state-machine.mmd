@@ -1,0 +1,13 @@
+stateDiagram-v2
+
+    [*] --> IDLE
+    IDLE --> PARSE_RESUME: start()
+    PARSE_RESUME --> ANALYZE_JD
+    ANALYZE_JD --> PLAN
+    PLAN --> INTERVIEW
+    INTERVIEW --> INTERVIEW: answer() 且未到题量上限
+    INTERVIEW --> CROSS_EXAM: 题量用完
+    CROSS_EXAM --> EVALUATE
+    EVALUATE --> REPORT
+    REPORT --> DONE
+    DONE --> [*]

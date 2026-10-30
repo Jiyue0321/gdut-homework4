@@ -1,0 +1,105 @@
+classDiagram
+    direction LR
+
+    class InterviewSession {
+        +phase Phase
+        +resume_text str
+        +jd_text str
+        +role_title str
+        +turns list~Turn~
+        +cross_exam CrossExam
+        +report_data dict
+        +qa_pairs() list
+        +turn_records() list
+        +weights() dict
+    }
+
+    class ResumeProfile {
+        +summary str
+        +skills list~str~
+        +projects list~str~
+        +highlights list~str~
+        +concerns list~str~
+    }
+
+    class CompetencyModel {
+        +role_title str
+        +competencies list~Competency~
+    }
+
+    class Competency {
+        +name str
+        +weight float
+        +required_level int
+        +resume_level int
+    }
+
+    class InterviewPlan {
+        +slots list~Slot~
+    }
+
+    class Slot {
+        +agent AgentName
+        +competency str
+        +focus str
+    }
+
+    class Question {
+        +text str
+        +competency str
+        +rubric Rubric
+        +followup_hint str
+    }
+
+    class Rubric {
+        +criteria list~str~
+        +good_looks_like str
+    }
+
+    class Turn {
+        +slot_index int
+        +agent AgentName
+        +question str
+        +answer str
+        +score AnswerScore
+        +is_followup bool
+    }
+
+    class AnswerScore {
+        +dimensions dict
+        +overall int
+        +evidence str
+        +comment str
+    }
+
+    class CrossExam {
+        +turn_index int
+        +question str
+        +scores dict
+        +merged AnswerScore
+    }
+
+    class Phase {
+        <<enumeration>>
+        IDLE
+        PARSE_RESUME
+        ANALYZE_JD
+        PLAN
+        INTERVIEW
+        CROSS_EXAM
+        EVALUATE
+        REPORT
+        DONE
+    }
+
+    InterviewSession *-- ResumeProfile
+    InterviewSession *-- CompetencyModel
+    InterviewSession *-- InterviewPlan
+    InterviewSession *-- Turn
+    InterviewSession *-- CrossExam
+    InterviewSession --> Phase
+    CompetencyModel *-- Competency
+    InterviewPlan *-- Slot
+    Turn *-- AnswerScore
+    CrossExam *-- AnswerScore
+    Question *-- Rubric

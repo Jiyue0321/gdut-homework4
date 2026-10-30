@@ -1,0 +1,90 @@
+classDiagram
+    direction TB
+
+    class Orchestrator {
+        -llm ChatProvider
+        -tools ToolProvider
+        -config InterviewConfig
+        +start() InterviewSession
+        +answer() InterviewSession
+        -_build_plan()
+        -_should_followup()
+        -_run_cross_exam()
+        -_evaluate_and_report()
+    }
+
+    class InterviewConfig {
+        +max_questions 6
+        +allow_followups true
+        +run_cross_exam true
+    }
+
+    class ChatProvider {
+        <<interface>>
+        +chat_json(messages, schema)
+    }
+
+    class ToolProvider {
+        <<interface>>
+        +check_resume_quality()
+        +match_competencies()
+        +aggregate_scores()
+        +merge_cross_exam()
+        +render_report_md()
+        +export_report()
+    }
+
+    class LocalTools
+    class MCPTools
+    class MCPToolClient {
+        +call_tool_json(name, args)
+    }
+
+    class ResumeAnalyst {
+        +analyze_resume()
+    }
+    class JDAnalyst {
+        +analyze_jd()
+    }
+    class InterviewerAgent {
+        +ask()
+    }
+    class Evaluator {
+        +evaluate()
+        +cross_exam()
+    }
+    class ReportWriter {
+        +write_report()
+    }
+
+    class rubric {
+        <<module>>
+        +clamp()
+        +normalize_weights()
+        +weighted_total()
+        +merge_cross_exam()
+        +overall_verdict()
+    }
+
+    class ASR {
+        <<interface>>
+        +transcribe() str
+    }
+    class TTS {
+        <<interface>>
+        +synthesize() bytes
+    }
+
+    Orchestrator --> InterviewConfig
+    Orchestrator --> ChatProvider
+    Orchestrator --> ToolProvider
+    Orchestrator ..> ResumeAnalyst
+    Orchestrator ..> JDAnalyst
+    Orchestrator ..> InterviewerAgent
+    Orchestrator ..> Evaluator
+    Orchestrator ..> ReportWriter
+    ToolProvider <|.. LocalTools
+    ToolProvider <|.. MCPTools
+    MCPTools --> MCPToolClient
+    LocalTools ..> rubric
+    MCPTools ..> rubric
