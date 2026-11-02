@@ -60,12 +60,24 @@ def _industries() -> list[str]:
     return names
 
 
+def _extractor():
+    """上传文件解析器；工具不可用时返回 None，页面不显示上传入口。"""
+    try:
+        config = load_config()
+        if not config.configured:
+            return None
+        tools = open_tools(config)
+        return tools.extract_document
+    except Exception:
+        return None
+
+
 def main() -> None:
     interview.hero()
 
     session = st.session_state.get("session")
     if session is None:
-        inputs = interview.setup_form(_industries())
+        inputs = interview.setup_form(_industries(), extract=_extractor())
         if inputs:
             client, tools, _ = _get_context()
             _new_interview(client, tools, *inputs)

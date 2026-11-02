@@ -80,6 +80,22 @@ def detect_industry(jd_text: str) -> str:
 
 
 @mcp.tool()
+def extract_document(filename: str, content_base64: str) -> str:
+    """从上传的 PDF / TXT / Markdown 文档中抽取文字，返回 JSON。
+
+    content_base64 是文件内容的 base64 编码。扫描件或无文字层的 PDF 会返回错误提示。
+    """
+    try:
+        data = base64.b64decode(content_base64, validate=True)
+    except Exception:
+        return "错误：文件内容不是合法的 base64 编码"
+    try:
+        return json.dumps(toolkit.extract_document_text(filename, data), ensure_ascii=False)
+    except ValueError as exc:
+        return f"错误：{exc}"
+
+
+@mcp.tool()
 def aggregate_scores(turns_json: str, weights_json: str) -> str:
     """按能力聚合逐题得分并计算加权总分，返回 JSON。
 

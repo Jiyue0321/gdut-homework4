@@ -37,27 +37,88 @@ def hero() -> None:
     st.caption("粘贴简历与岗位 JD，让 HR、技术、压力三位 AI 面试官轮流发难。")
 
 
-def setup_form(industries: list[str] | None = None) -> tuple[str, str, str, str] | None:
+def _upload_text(
+    *,
+    label: str,
+    file_key: str,
+    target_key: str,
+    extract,
+    help_text: str,
+) -> bool:
+    """上传 PDF/TXT 后把文字回填到目标文本框；同一个文件只解析一次。
+
+    返回是否解析失败（失败信息已展示在页面上）。
+    """
+    uploaded = st.file_uploader(
+        label,
+        type=["pdf", "txt", "md"],
+        key=file_key,
+        help=help_text,
+        width="stretch",
+    )
+    if uploaded is None:
+        st.session_state.pop(f"{file_key}_done", None)
+        return False
+
+    file_id = getattr(uploaded, "file_id", None) or f"{uploaded.name}:{uploaded.size}"
+    if st.session_state.get(f"{file_key}_done") == file_id:
+        return bool(st.session_state.get(f"{file_key}_error"))
+
+    try:
+        result = extract(uploaded.name, uploaded.getvalue())
+    except ValueError as exc:
+        st.session_state[f"{file_key}_done"] = file_id
+        st.session_state[f"{file_key}_error"] = str(exc)
+        st.error(f"{label}解析失败：{exc}")
+        return True
+
+    st.session_state[target_key] = result["text"]
+    st.session_state[f"{file_key}_done"] = file_id
+    st.session_state[f"{file_key}_error"] = ""
+    st.success(f"已从 {uploaded.name} 导入 {result['chars']} 个字符，可在下方修改。")
+    return False
+
+
+def setup_form(
+    industries: list[str] | None = None,
+    extract=None,
+) -> tuple[str, str, str, str] | None:
     """第 1-2 步：录入简历、JD、岗位名与行业。返回 (简历, JD, 岗位, 行业) 或 None。"""
     st.subheader("第一步 · 让面试官认识你")
     col1, col2 = st.columns(2)
     with col1:
+        if extract is not None:
+            _upload_text(
+                label="上传简历文件",
+                file_key="resume_pdf",
+                target_key="resume_text",
+                extract=extract,
+                help_text="支持 PDF、TXT、Markdown，最大 10 MB；解析后自动填入下方文本框。",
+            )
         if st.button("填入示例简历", width='stretch'):
             st.session_state.resume_text = SAMPLE_RESUME
         resume_text = st.text_area(
             "简历正文",
             key="resume_text",
             height=260,
-            placeholder="把简历复制粘贴到这里，建议保留项目经历里的数字。",
+            placeholder="把简历复制粘贴到这里，或上传 PDF 自动导入，建议保留项目经历里的数字。",
         )
     with col2:
+        if extract is not None:
+            _upload_text(
+                label="上传岗位 JD 文件",
+                file_key="jd_pdf",
+                target_key="jd_text",
+                extract=extract,
+                help_text="支持 PDF、TXT、Markdown，最大 10 MB；解析后自动填入下方文本框。",
+            )
         if st.button("填入示例 JD", width='stretch'):
             st.session_state.jd_text = SAMPLE_JD
         jd_text = st.text_area(
             "岗位 JD",
             key="jd_text",
             height=260,
-            placeholder="把目标岗位的 JD 粘贴到这里。",
+            placeholder="把目标岗位的 JD 粘贴到这里，或上传 PDF 自动导入。",
         )
 
     role_col, industry_col = st.columns([2, 1])

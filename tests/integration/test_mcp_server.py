@@ -13,6 +13,7 @@ EXPECTED = {
     "list_competencies",
     "list_industries",
     "detect_industry",
+    "extract_document",
     "aggregate_scores",
     "merge_cross_exam",
     "render_report_md",
@@ -56,3 +57,12 @@ def test_mcp_renders_pdf_ipc_payload():
     report = {"role_title": "后端开发实习生", "overall_score": 3.2, "verdict": "基本达标"}
     payload = MCPTools().render_report_pdf(report)
     assert payload.startswith(b"%PDF-")
+
+
+def test_mcp_extracts_text_document():
+    from agent.tools import LocalTools, MCPTools
+
+    payload = "教育背景：广东工业大学".encode("utf-8")
+    assert MCPTools().extract_document("resume.txt", payload) == LocalTools().extract_document(
+        "resume.txt", payload
+    )

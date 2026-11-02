@@ -28,6 +28,7 @@ class ToolProvider(Protocol):
     ) -> list[dict[str, Any]]: ...
     def list_industries(self) -> list[str]: ...
     def detect_industry(self, jd_text: str) -> str: ...
+    def extract_document(self, filename: str, data: bytes) -> dict[str, Any]: ...
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]
     ) -> dict[str, Any]: ...
@@ -62,6 +63,9 @@ class LocalTools:
 
     def detect_industry(self, jd_text: str) -> str:
         return toolkit.detect_job_industry(jd_text)
+
+    def extract_document(self, filename: str, data: bytes) -> dict[str, Any]:
+        return toolkit.extract_document_text(filename, data)
 
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]
@@ -126,6 +130,12 @@ class MCPTools:
 
     def detect_industry(self, jd_text: str) -> str:
         return self._call("detect_industry", {"jd_text": jd_text})
+
+    def extract_document(self, filename: str, data: bytes) -> dict[str, Any]:
+        return self._call(
+            "extract_document",
+            {"filename": filename, "content_base64": base64.b64encode(data).decode("ascii")},
+        )
 
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]

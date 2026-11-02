@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
 from mcp_server import rubric
+from mcp_server.document import extract_document as _extract_document
 from mcp_server.pdf_report import render_report_pdf as _render_report_pdf
 from mcp_server.question_bank import (
     competencies_in_bank,
@@ -27,6 +28,11 @@ SECTION_HINTS = {
 }
 
 QUANT_RE = re.compile(r"\d+(?:\.\d+)?\s*(?:%|％|倍|万|k|K|ms|s|秒|qps|QPS|人|个|项)")
+
+
+def extract_document_text(filename: str, data: bytes) -> dict[str, Any]:
+    """抽取上传文档（PDF / TXT / Markdown）的文字。"""
+    return _extract_document(filename, data)
 
 
 def check_resume_quality(text: str) -> dict[str, Any]:

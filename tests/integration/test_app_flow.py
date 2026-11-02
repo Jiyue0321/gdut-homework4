@@ -76,6 +76,72 @@ def test_setup_page_offers_industry_selector(app: AppTest):
     assert "金融科技" in options
 
 
+def _resume_pdf_bytes(lines: list[str]) -> bytes:
+    from io import BytesIO
+
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfgen import canvas
+
+    try:
+        pdfmetrics.registerFont(TTFont("FlowTestCJK", "C:/Windows/Fonts/msyh.ttc", subfontIndex=0))
+        font = "FlowTestCJK"
+    except Exception:
+        from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+        pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
+        font = "STSong-Light"
+
+    buffer = BytesIO()
+    canvas_obj = canvas.Canvas(buffer, pagesize=A4)
+    canvas_obj.setFont(font, 12)
+    y = 800
+    for line in lines:
+        canvas_obj.drawString(50, y, line)
+        y -= 20
+    canvas_obj.save()
+    return buffer.getvalue()
+
+
+def test_upload_pdf_fills_resume_and_jd_text_areas(app: AppTest):
+    app.file_uploader(key="resume_pdf").upload(
+        "简历.pdf",
+        _resume_pdf_bytes(["教育背景：广东工业大学 软件工程", "项目成果：接口 P99 从 800ms 降到 120ms"]),
+        "application/pdf",
+    )
+    app.file_uploader(key="jd_pdf").upload(
+        "jd.pdf",
+        _resume_pdf_bytes(["后端开发实习生", "要求：熟悉 Python 与 MySQL"]),
+        "application/pdf",
+    )
+    app.run()
+    assert not app.exception, [e.value for e in app.exception]
+    assert "广东工业大学" in app.text_area(key="resume_text").value
+    assert "后端开发实习生" in app.text_area(key="jd_text").value
+    assert any("已从 简历.pdf 导入" in s.value for s in app.success)
+
+
+def test_uploaded_text_is_editable_before_start(app: AppTest):
+    app.file_uploader(key="resume_pdf").upload(
+        "简历.txt", "教育背景：广东工业大学".encode("utf-8"), "text/plain"
+    )
+    app.run()
+    assert "广东工业大学" in app.text_area(key="resume_text").value
+
+    app.text_area(key="resume_text").set_value("教育背景：手动修改后的简历")
+    app.run()
+    assert app.text_area(key="resume_text").value == "教育背景：手动修改后的简历"
+
+
+def test_upload_broken_pdf_shows_chinese_error(app: AppTest):
+    app.file_uploader(key="resume_pdf").upload("简历.pdf", b"not a real pdf", "application/pdf")
+    app.run()
+    assert not app.exception, [e.value for e in app.exception]
+    assert any("解析失败" in error.value for error in app.error)
+    assert app.text_area(key="resume_text").value in ("", None)
+
+
 def test_selected_industry_flows_into_session(app: AppTest):
     app.text_area(key="resume_text").set_value(RESUME_TEXT)
     app.text_area(key="jd_text").set_value(JD_TEXT)
