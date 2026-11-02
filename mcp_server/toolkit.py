@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
 from mcp_server import rubric
+from mcp_server.pdf_report import render_report_pdf as _render_report_pdf
 from mcp_server.question_bank import competencies_in_bank, pick_questions
 from mcp_server.sandbox import SandboxError, display_path, resolve_safe
 
@@ -205,15 +206,32 @@ def _level_label(score: float) -> str:
 
 def export_report(filename: str, content: str) -> dict[str, Any]:
     """把报告写入 workspace 沙箱。"""
+    return _write_workspace(filename, content.encode("utf-8"), {".md", ".markdown", ".txt"}, "仅支持导出 .md / .markdown / .txt 报告")
+
+
+def render_report_pdf_bytes(report: Mapping[str, Any]) -> bytes:
+    """把报告数据渲染成 PDF 字节流（中文 A4）。"""
+    return _render_report_pdf(report, generated_at=get_current_time())
+
+
+def export_report_pdf(filename: str, report: Mapping[str, Any]) -> dict[str, Any]:
+    """渲染并把 PDF 报告写入 workspace 沙箱。"""
+    payload = render_report_pdf_bytes(report)
+    return _write_workspace(filename, payload, {".pdf"}, "仅支持导出 .pdf 报告")
+
+
+def _write_workspace(
+    filename: str, payload: bytes, suffixes: set[str], rejected: str
+) -> dict[str, Any]:
     try:
         target = resolve_safe(filename)
     except SandboxError as exc:
         raise ValueError(str(exc)) from exc
-    if target.suffix.lower() not in {".md", ".markdown", ".txt"}:
-        raise ValueError("仅支持导出 .md / .markdown / .txt 报告")
+    if target.suffix.lower() not in suffixes:
+        raise ValueError(rejected)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
-    return {"path": display_path(target), "bytes": len(content.encode("utf-8"))}
+    target.write_bytes(payload)
+    return {"path": display_path(target), "bytes": len(payload)}
 
 
 def get_current_time() -> str:

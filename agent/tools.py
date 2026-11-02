@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -25,7 +26,9 @@ class ToolProvider(Protocol):
     ) -> dict[str, Any]: ...
     def merge_cross_exam(self, scores: Sequence[float]) -> dict[str, Any]: ...
     def render_report_md(self, report: Mapping[str, Any]) -> str: ...
+    def render_report_pdf(self, report: Mapping[str, Any]) -> bytes: ...
     def export_report(self, filename: str, content: str) -> dict[str, Any]: ...
+    def export_report_pdf(self, filename: str, report: Mapping[str, Any]) -> dict[str, Any]: ...
 
 
 class LocalTools:
@@ -53,8 +56,14 @@ class LocalTools:
     def render_report_md(self, report: Mapping[str, Any]) -> str:
         return toolkit.render_report_md(report)
 
+    def render_report_pdf(self, report: Mapping[str, Any]) -> bytes:
+        return toolkit.render_report_pdf_bytes(report)
+
     def export_report(self, filename: str, content: str) -> dict[str, Any]:
         return toolkit.export_report(filename, content)
+
+    def export_report_pdf(self, filename: str, report: Mapping[str, Any]) -> dict[str, Any]:
+        return toolkit.export_report_pdf(filename, report)
 
 
 class MCPTools:
@@ -109,8 +118,20 @@ class MCPTools:
             "render_report_md", {"report_json": json.dumps(report, ensure_ascii=False)}
         )
 
+    def render_report_pdf(self, report: Mapping[str, Any]) -> bytes:
+        result = self._call(
+            "render_report_pdf", {"report_json": json.dumps(report, ensure_ascii=False)}
+        )
+        return base64.b64decode(result["pdf_base64"])
+
     def export_report(self, filename: str, content: str) -> dict[str, Any]:
         return self._call("export_report", {"filename": filename, "content": content})
+
+    def export_report_pdf(self, filename: str, report: Mapping[str, Any]) -> dict[str, Any]:
+        return self._call(
+            "export_report_pdf",
+            {"filename": filename, "report_json": json.dumps(report, ensure_ascii=False)},
+        )
 
 
 def open_tools(config: LLMConfig) -> ToolProvider:

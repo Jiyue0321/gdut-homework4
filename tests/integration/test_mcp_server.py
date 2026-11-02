@@ -14,7 +14,9 @@ EXPECTED = {
     "aggregate_scores",
     "merge_cross_exam",
     "render_report_md",
+    "render_report_pdf",
     "export_report",
+    "export_report_pdf",
     "get_current_time",
 }
 
@@ -44,3 +46,11 @@ def test_mcp_roundtrip_is_consistent_with_local_tools():
 
     payload = [{"name": "技术深度", "weight": 0.6, "required_level": 4, "resume_level": 3}]
     assert MCPTools().match_competencies(payload) == LocalTools().match_competencies(payload)
+
+
+def test_mcp_renders_pdf_ipc_payload():
+    from agent.tools import MCPTools
+
+    report = {"role_title": "后端开发实习生", "overall_score": 3.2, "verdict": "基本达标"}
+    payload = MCPTools().render_report_pdf(report)
+    assert payload.startswith(b"%PDF-")

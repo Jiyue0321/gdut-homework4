@@ -134,6 +134,70 @@ def test_export_report_rejects_other_extensions(tmp_path, monkeypatch):
         toolkit.export_report("report.exe", "x")
 
 
+PDF_REPORT = {
+    "role_title": "后端开发实习生",
+    "overall_score": 3.2,
+    "verdict": "基本达标",
+    "dimensions": {"系统设计": 3.0, "技术深度": 2.0},
+    "turns": [
+        {
+            "agent_label": "技术面试官",
+            "question": "怎么防止重复下单？",
+            "answer": "我用唯一索引与幂等键",
+            "overall": 4,
+            "competency": "系统设计",
+            "evidence": "唯一索引",
+            "comment": "清晰",
+        }
+    ],
+    "cross_exam": {
+        "question": "怎么保证幂等？",
+        "scores": {
+            "hr": {"overall": 2, "comment": "没听清动机"},
+            "tech": {"overall": 4, "comment": "方案可行"},
+            "pressure": {"overall": 3, "comment": "论据一般"},
+        },
+        "merged": {"overall": 3},
+    },
+    "strengths": ["结构清楚"],
+    "improvements": ["缺少量化"],
+    "action_plan": ["准备三个项目故事", "补齐性能指标", "练习追问场景"],
+    "sample_answer": "按 STAR 结构回答。",
+    "warnings": ["技术深度 实测 2.0/5"],
+}
+
+
+def test_render_report_pdf_returns_valid_pdf():
+    payload = toolkit.render_report_pdf_bytes(PDF_REPORT)
+    assert payload.startswith(b"%PDF-")
+    assert payload.rstrip().endswith(b"%%EOF")
+    assert len(payload) > 2000
+
+
+def test_render_report_pdf_handles_minimal_report():
+    payload = toolkit.render_report_pdf_bytes({"role_title": "岗位", "overall_score": 0})
+    assert payload.startswith(b"%PDF-")
+
+
+def test_render_report_pdf_escapes_markup_in_user_text():
+    report = dict(PDF_REPORT, turns=[dict(PDF_REPORT["turns"][0], answer="<b>加粗</b> & 符号")])
+    assert toolkit.render_report_pdf_bytes(report).startswith(b"%PDF-")
+
+
+def test_export_report_pdf_writes_into_workspace(tmp_path, monkeypatch):
+    monkeypatch.setattr(toolkit, "resolve_safe", lambda name: tmp_path / name)
+    monkeypatch.setattr(toolkit, "display_path", lambda p: p.name)
+    result = toolkit.export_report_pdf("report.pdf", PDF_REPORT)
+    assert result["path"] == "report.pdf"
+    assert (tmp_path / "report.pdf").read_bytes().startswith(b"%PDF-")
+
+
+def test_export_report_pdf_rejects_markdown_name(tmp_path, monkeypatch):
+    monkeypatch.setattr(toolkit, "resolve_safe", lambda name: tmp_path / name)
+    with pytest.raises(ValueError, match="仅支持导出 .pdf"):
+        toolkit.export_report_pdf("report.md", PDF_REPORT)
+
+
 def test_sandbox_rejects_parent_traversal():
     with pytest.raises(SandboxError):
         resolve_safe("../../etc/passwd")

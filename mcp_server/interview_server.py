@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from typing import Any, Sequence
 
@@ -87,10 +88,31 @@ def render_report_md(report_json: str) -> str:
 
 
 @mcp.tool()
+def render_report_pdf(report_json: str) -> str:
+    """把面试报告数据渲染为 PDF（中文 A4），返回 base64 编码的 JSON。"""
+    report = _loads(report_json, {})
+    payload = toolkit.render_report_pdf_bytes(report)
+    return json.dumps(
+        {"pdf_base64": base64.b64encode(payload).decode("ascii"), "bytes": len(payload)},
+        ensure_ascii=False,
+    )
+
+
+@mcp.tool()
 def export_report(filename: str, content: str) -> str:
     """把报告写入 workspace/ 目录（仅支持 .md/.markdown/.txt），返回 JSON。"""
     try:
         result = toolkit.export_report(filename, content)
+    except ValueError as exc:
+        return f"错误：{exc}"
+    return json.dumps(result, ensure_ascii=False)
+
+
+@mcp.tool()
+def export_report_pdf(filename: str, report_json: str) -> str:
+    """渲染 PDF 报告并写入 workspace/（仅支持 .pdf），返回 JSON。"""
+    try:
+        result = toolkit.export_report_pdf(filename, _loads(report_json, {}))
     except ValueError as exc:
         return f"错误：{exc}"
     return json.dumps(result, ensure_ascii=False)

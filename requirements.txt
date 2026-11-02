@@ -5,3 +5,4 @@ python-dotenv==1.2.4
 pydantic==2.14.1
 plotly==7.1.0
 pytest==9.2.0
+reportlab==5.1.0

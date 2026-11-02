@@ -113,7 +113,8 @@ def test_report_page_renders_scores_and_export(app: AppTest):
 
     labels = [m.label for m in app.metric]
     assert "加权总分" in labels
-    assert any("下载复盘报告" in b.label for b in app.download_button)
+    assert any("下载复盘报告（Markdown）" in b.label for b in app.download_button)
+    assert any("下载复盘报告（PDF）" in b.label for b in app.download_button)
     assert any("复盘报告" in h.value for h in app.subheader)
 
 

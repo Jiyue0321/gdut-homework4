@@ -10,7 +10,7 @@ from agent.state import AGENT_LABELS
 from ui.interview import radar_chart
 
 
-def render_report(session, tools, *, export_name: str = "面试复盘报告.md") -> None:
+def render_report(session, tools, *, export_name: str = "面试复盘报告") -> None:
     data = session.report_data
     st.subheader("面试复盘报告")
 
@@ -64,14 +64,22 @@ def render_cross_exam(cross_exam) -> None:
     st.success(f"综合中位数：{cross_exam.merged.overall} / 5 —— {cross_exam.merged.comment}")
 
 
-def _render_export(session, tools, default_name: str) -> None:
+def _render_export(session, tools, base_name: str) -> None:
     markdown = tools.render_report_md(session.report_data)
-    st.download_button(
+    left, right = st.columns(2)
+    left.download_button(
         "下载复盘报告（Markdown）",
         data=markdown.encode("utf-8"),
-        file_name=default_name,
+        file_name=f"{base_name}.md",
         mime="text/markdown",
-        width='stretch',
+        width="stretch",
+    )
+    right.download_button(
+        "下载复盘报告（PDF）",
+        data=tools.render_report_pdf(session.report_data),
+        file_name=f"{base_name}.pdf",
+        mime="application/pdf",
+        width="stretch",
     )
     with st.expander("在页面上查看完整报告"):
         st.markdown(markdown)
