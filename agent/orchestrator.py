@@ -31,6 +31,8 @@ class InterviewConfig:
     max_questions: int = 6
     allow_followups: bool = True
     run_cross_exam: bool = True
+    industry: str = "自动"
+    bank_questions_per_slot: int = 2
 
     @property
     def agent_cycle(self) -> tuple[AgentName, ...]:
@@ -45,6 +47,7 @@ class InterviewSession:
     resume_text: str = ""
     jd_text: str = ""
     role_title: str = ""
+    industry: str = "通用"
     profile: ResumeProfile | None = None
     competency_model: CompetencyModel | None = None
     radar: list[dict[str, Any]] = field(default_factory=list)
@@ -112,6 +115,11 @@ class Tools(Protocol):
     def match_competencies(self, competencies: Sequence[Mapping[str, Any]]) -> dict[str, Any]: ...
     def aggregate_scores(self, turns: Any, weights: Any) -> dict[str, Any]: ...
     def merge_cross_exam(self, scores: Sequence[float]) -> dict[str, Any]: ...
+    def pick_questions(
+        self, competencies: Sequence[str], agent: str, count: int, seed: int | None = None,
+        industry: str | None = None,
+    ) -> list[dict[str, Any]]: ...
+    def detect_industry(self, jd_text: str) -> str: ...
 
 
 class Orchestrator:
@@ -151,6 +159,7 @@ class Orchestrator:
             )
             session.radar = match.get("radar", [])
             session.gaps = match.get("gaps", [])
+            session.industry = self._resolve_industry(session)
             session.plan = self._build_plan(session)
 
             session.phase = Phase.INTERVIEW
@@ -178,6 +187,8 @@ class Orchestrator:
                 last_question=session.current_question.text,
                 last_answer=answer_text.strip(),
                 is_last_slot=last_slot,
+                industry=session.industry,
+                bank_questions=self._bank_hints(session, slot),
             )
             score = decision.score or evaluator.evaluate(
                 self._llm, session.current_question, answer_text.strip()
@@ -210,6 +221,29 @@ class Orchestrator:
         return session
 
     # ---------- 内部 ----------
+
+    def _resolve_industry(self, session: InterviewSession) -> str:
+        """配置指定了行业就用指定的；「自动」则从 JD 关键词推断。"""
+        configured = (self._config.industry or "").strip()
+        if configured and configured not in {"自动", "通用"}:
+            return configured
+        try:
+            return self._tools.detect_industry(session.jd_text) or "通用"
+        except Exception:
+            return "通用"
+
+    def _bank_hints(self, session: InterviewSession, slot: Slot) -> list[str]:
+        """取同行业、同角色的题库题目作为参考，失败时静默降级为空。"""
+        count = self._config.bank_questions_per_slot
+        if count <= 0:
+            return []
+        try:
+            picked = self._tools.pick_questions(
+                [slot.competency], slot.agent, count, industry=session.industry
+            )
+        except Exception:
+            return []
+        return [str(q.get("text", "")).strip() for q in picked if q.get("text")]
 
     def _build_plan(self, session: InterviewSession) -> InterviewPlan:
         assert session.competency_model is not None
@@ -249,6 +283,8 @@ class Orchestrator:
             slot,
             session.profile,  # type: ignore[arg-type]
             session.role_title,
+            industry=session.industry,
+            bank_questions=self._bank_hints(session, slot),
         )
         if decision.question is None:
             session.error = "面试官没有给出问题，请重试"
@@ -299,6 +335,7 @@ class Orchestrator:
         aggregate = self._tools.aggregate_scores(session.turn_records(), session.weights())
         session.report_data = {
             "role_title": session.role_title,
+            "industry": session.industry,
             **aggregate,
             "turns": session.qa_pairs,
             "cross_exam": session.cross_exam.model_dump() if session.cross_exam else None,

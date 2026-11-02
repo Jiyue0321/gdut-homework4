@@ -56,6 +56,28 @@ def test_interviewer_messages_carry_slot_focus(fake):
     assert "订单幂等" in messages[0]["content"]
 
 
+def test_interviewer_messages_carry_industry_and_bank_hints():
+    messages = interviewers.build_messages(
+        Slot(agent="tech", competency="系统设计", focus="订单幂等"),
+        profile=default_resume(),
+        role_title="后端开发",
+        industry="金融科技",
+        bank_questions=["对账系统你会怎么设计？"],
+    )
+    content = messages[0]["content"]
+    assert "金融科技" in content
+    assert "对账系统你会怎么设计？" in content
+
+
+def test_interviewer_messages_mark_missing_bank_hints():
+    messages = interviewers.build_messages(
+        Slot(agent="tech", competency="系统设计", focus="订单"),
+        profile=default_resume(),
+        role_title="后端开发",
+    )
+    assert "自行设计问题" in messages[0]["content"]
+
+
 def test_interviewer_first_question_drops_hallucinated_score():
     fake = FakeLLM()
     slot = Slot(agent="tech", competency="系统设计", focus="订单")

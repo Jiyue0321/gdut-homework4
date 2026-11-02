@@ -47,11 +47,17 @@ def match_competencies(competencies_json: str) -> str:
 
 
 @mcp.tool()
-def pick_questions(competencies_json: str, agent: str, count: int, seed: int | None = None) -> str:
-    """按能力标签和面试官角色（hr/tech/pressure）从题库抽题，返回 JSON 数组。"""
+def pick_questions(
+    competencies_json: str,
+    agent: str,
+    count: int,
+    seed: int | None = None,
+    industry: str | None = None,
+) -> str:
+    """按能力标签、面试官角色（hr/tech/pressure）与行业从题库抽题，返回 JSON 数组。"""
     competencies = _loads(competencies_json, [])
     return json.dumps(
-        toolkit.select_questions(competencies, agent, count, seed), ensure_ascii=False
+        toolkit.select_questions(competencies, agent, count, seed, industry), ensure_ascii=False
     )
 
 
@@ -59,6 +65,18 @@ def pick_questions(competencies_json: str, agent: str, count: int, seed: int | N
 def list_competencies() -> str:
     """列出题库覆盖的全部能力标签。"""
     return json.dumps(toolkit.list_question_competencies(), ensure_ascii=False)
+
+
+@mcp.tool()
+def list_industries() -> str:
+    """列出题库支持的行业标签。"""
+    return json.dumps(toolkit.list_industries(), ensure_ascii=False)
+
+
+@mcp.tool()
+def detect_industry(jd_text: str) -> str:
+    """按关键词判断岗位 JD 属于哪个行业，返回行业名。"""
+    return toolkit.detect_job_industry(jd_text)
 
 
 @mcp.tool()

@@ -37,8 +37,8 @@ def hero() -> None:
     st.caption("粘贴简历与岗位 JD，让 HR、技术、压力三位 AI 面试官轮流发难。")
 
 
-def setup_form() -> tuple[str, str, str] | None:
-    """第 1-2 步：录入简历、JD 与岗位名。返回 (简历, JD, 岗位) 或 None。"""
+def setup_form(industries: list[str] | None = None) -> tuple[str, str, str, str] | None:
+    """第 1-2 步：录入简历、JD、岗位名与行业。返回 (简历, JD, 岗位, 行业) 或 None。"""
     st.subheader("第一步 · 让面试官认识你")
     col1, col2 = st.columns(2)
     with col1:
@@ -60,16 +60,26 @@ def setup_form() -> tuple[str, str, str] | None:
             placeholder="把目标岗位的 JD 粘贴到这里。",
         )
 
-    role_title = st.text_input(
-        "岗位名称", key="role_title", placeholder="例如：后端开发实习生"
-    )
+    role_col, industry_col = st.columns([2, 1])
+    with role_col:
+        role_title = st.text_input(
+            "岗位名称", key="role_title", placeholder="例如：后端开发实习生"
+        )
+    with industry_col:
+        options = ["自动", *[name for name in (industries or []) if name != "通用"], "通用"]
+        industry = st.selectbox(
+            "目标行业",
+            options,
+            key="industry",
+            help="选「自动」会按 JD 关键词判断；行业决定面试官参考的题库题目。",
+        )
 
     ready = bool(resume_text.strip() and jd_text.strip())
     if not ready:
         st.info("填写简历和 JD 后即可开始面试。")
         return None
     if st.button("开始面试", type="primary", width='stretch'):
-        return resume_text, jd_text, role_title.strip() or "目标岗位"
+        return resume_text, jd_text, role_title.strip() or "目标岗位", industry
     return None
 
 

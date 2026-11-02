@@ -1,5 +1,16 @@
 {
-  "version": 1,
+  "version": 2,
+  "industries": [
+    "通用",
+    "互联网后端",
+    "互联网前端",
+    "人工智能",
+    "数据分析",
+    "软件测试",
+    "嵌入式",
+    "产品运营",
+    "金融科技"
+  ],
   "competencies": [
     "岗位动机",
     "沟通表达",
@@ -16,182 +27,688 @@
     {
       "id": "hr-01",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["岗位动机"],
       "text": "为什么选择这个岗位？如果同时拿到其他方向的 offer，你会怎么排序？"
     },
     {
       "id": "hr-02",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["岗位动机"],
       "text": "你对我们这个岗位日常做的事情有多了解？说说你认为最难适应的部分。"
     },
     {
       "id": "hr-03",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["团队协作", "沟通表达"],
       "text": "讲一次你和队友意见分歧的经历，最后是怎么收敛的？"
     },
     {
       "id": "hr-04",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["团队协作"],
       "text": "团队里有人长期拖进度，但不归你管，你会怎么处理？"
     },
     {
       "id": "hr-05",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["沟通表达"],
       "text": "用三分钟向一个完全不懂技术的人解释你最近做过的项目。"
     },
     {
       "id": "hr-06",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["学习能力"],
       "text": "最近半年你主动学了什么？为什么学，学到了什么程度？"
     },
     {
       "id": "hr-07",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["岗位动机", "学习能力"],
       "text": "如果入职后发现工作内容和你预期不一致，你会怎么办？"
     },
     {
       "id": "hr-08",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["沟通表达"],
       "text": "你希望上级用什么样的方式给你反馈？反过来，你希望团队怎么评价你？"
     },
     {
       "id": "hr-09",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["团队协作"],
       "text": "你更适应独立完成还是结对推进？分别举一个你做得最好的例子。"
     },
     {
       "id": "hr-10",
       "agent": "hr",
+      "industry": "通用",
       "competencies": ["岗位动机"],
       "text": "你未来三年的职业规划是什么？这个岗位在其中扮演什么角色？"
     },
     {
+      "id": "hr-11",
+      "agent": "hr",
+      "industry": "互联网后端",
+      "competencies": ["抗压能力", "岗位动机"],
+      "text": "后端岗位常要值班处理线上事故，你怎么看待这种工作节奏？"
+    },
+    {
+      "id": "hr-12",
+      "agent": "hr",
+      "industry": "互联网后端",
+      "competencies": ["岗位动机"],
+      "text": "你更想做业务后端还是基础架构？说清楚你的理由和取舍。"
+    },
+    {
+      "id": "hr-13",
+      "agent": "hr",
+      "industry": "互联网前端",
+      "competencies": ["团队协作", "沟通表达"],
+      "text": "前端经常要和设计、产品反复对齐，你怎么看待这种反复？"
+    },
+    {
+      "id": "hr-14",
+      "agent": "hr",
+      "industry": "互联网前端",
+      "competencies": ["学习能力"],
+      "text": "前端生态更新很快，你平时怎么跟进？举一个你实际用上的例子。"
+    },
+    {
+      "id": "hr-15",
+      "agent": "hr",
+      "industry": "人工智能",
+      "competencies": ["抗压能力", "岗位动机"],
+      "text": "算法工作经常长时间没有正向结果，你怎么处理这种不确定性？"
+    },
+    {
+      "id": "hr-16",
+      "agent": "hr",
+      "industry": "人工智能",
+      "competencies": ["沟通表达"],
+      "text": "你怎么向完全不懂算法的同事解释一个模型指标？现场演示一下。"
+    },
+    {
+      "id": "hr-17",
+      "agent": "hr",
+      "industry": "人工智能",
+      "competencies": ["岗位动机", "学习能力"],
+      "text": "你更倾向做研究型工作还是工程落地型工作？为什么？"
+    },
+    {
+      "id": "hr-18",
+      "agent": "hr",
+      "industry": "数据分析",
+      "competencies": ["沟通表达", "问题解决"],
+      "text": "业务方给的需求经常说不清楚，你会怎么把问题问明白？"
+    },
+    {
+      "id": "hr-19",
+      "agent": "hr",
+      "industry": "数据分析",
+      "competencies": ["岗位动机"],
+      "text": "你怎么看待数据分析师和业务方的职责边界？"
+    },
+    {
+      "id": "hr-20",
+      "agent": "hr",
+      "industry": "软件测试",
+      "competencies": ["沟通表达", "团队协作"],
+      "text": "开发认为你提的问题不算 bug，你会怎么沟通推进？"
+    },
+    {
+      "id": "hr-21",
+      "agent": "hr",
+      "industry": "软件测试",
+      "competencies": ["抗压能力", "岗位动机"],
+      "text": "测试常常是发布前的最后一道关，你怎么看待这种压力？"
+    },
+    {
+      "id": "hr-22",
+      "agent": "hr",
+      "industry": "嵌入式",
+      "competencies": ["抗压能力", "学习能力"],
+      "text": "嵌入式项目周期长、软硬件联调反复，你怎么保持推进节奏？"
+    },
+    {
+      "id": "hr-23",
+      "agent": "hr",
+      "industry": "嵌入式",
+      "competencies": ["岗位动机"],
+      "text": "这个岗位可能需要经常到客户现场调试，你怎么看？"
+    },
+    {
+      "id": "hr-24",
+      "agent": "hr",
+      "industry": "产品运营",
+      "competencies": ["抗压能力", "沟通表达"],
+      "text": "你提的产品方案被砍过吗？当时你怎么面对？"
+    },
+    {
+      "id": "hr-25",
+      "agent": "hr",
+      "industry": "产品运营",
+      "competencies": ["团队协作", "问题解决"],
+      "text": "在不掌握开发资源的情况下，你怎么把一件事推动下去？"
+    },
+    {
+      "id": "hr-26",
+      "agent": "hr",
+      "industry": "金融科技",
+      "competencies": ["岗位动机", "抗压能力"],
+      "text": "金融系统对准确性和合规要求很高，你怎么看待这种约束？"
+    },
+    {
+      "id": "hr-27",
+      "agent": "hr",
+      "industry": "金融科技",
+      "competencies": ["岗位动机"],
+      "text": "你了解过金融行业的哪些岗位职责？为什么选择它？"
+    },
+    {
       "id": "tech-01",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["技术深度", "问题解决"],
       "text": "挑你简历里最有含金量的一个项目，讲讲它解决的核心问题和你的技术选型理由。"
     },
     {
       "id": "tech-02",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["技术深度"],
       "text": "你项目里最复杂的一段逻辑是什么？如果让你重写，会怎么改？"
     },
     {
       "id": "tech-03",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["工程实践"],
       "text": "线上出现了一个偶发报错，日志里只有零散线索，你的排查顺序是什么？"
     },
     {
       "id": "tech-04",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["工程实践", "数据意识"],
       "text": "你怎么判断一次性能优化是真的有效？会看哪些指标？"
     },
     {
       "id": "tech-05",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["系统设计"],
       "text": "设计一个支持多人同时编辑的待办清单，说说数据一致性怎么保证。"
     },
     {
       "id": "tech-06",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["系统设计", "技术深度"],
       "text": "如果接口响应从 200ms 掉到 2s，你会从哪些层面定位问题？"
     },
     {
       "id": "tech-07",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["问题解决"],
       "text": "描述一次你调试了很久才解决的 bug，关键转折是什么？"
     },
     {
       "id": "tech-08",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["工程实践"],
       "text": "你写过的代码里，测试覆盖到什么程度？哪些部分你坚持要写测试？"
     },
     {
       "id": "tech-09",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["学习能力", "技术深度"],
       "text": "挑一个你熟悉的框架，说说它的设计取舍，以及什么场景下不该用它。"
     },
     {
       "id": "tech-10",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["数据意识"],
       "text": "你做过的工作里，有没有用数据证明效果的例子？数据是怎么采集的？"
     },
     {
       "id": "tech-11",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["技术深度", "系统设计"],
       "text": "如果要给现有系统加缓存，你会先回答哪几个问题？可能带来什么新风险？"
     },
     {
       "id": "tech-12",
       "agent": "tech",
+      "industry": "通用",
       "competencies": ["问题解决"],
       "text": "遇到一个没人做过、文档也很少的技术问题，你会怎么推进？"
     },
     {
+      "id": "tech-13",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["系统设计", "技术深度"],
+      "text": "订单量翻十倍时，你的数据库会在哪个环节先撑不住？打算怎么改？"
+    },
+    {
+      "id": "tech-14",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["系统设计", "工程实践"],
+      "text": "说说你项目里事务边界是怎么划的，为什么划在这里？"
+    },
+    {
+      "id": "tech-15",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["问题解决", "系统设计"],
+      "text": "消息队列的重复消费和消息丢失，你分别怎么防？"
+    },
+    {
+      "id": "tech-16",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["系统设计"],
+      "text": "你会怎么给一个接口设计限流？按什么维度限，超限后怎么处理？"
+    },
+    {
+      "id": "tech-17",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["技术深度", "问题解决"],
+      "text": "分布式锁你会怎么实现？它可能出现哪些失效场景？"
+    },
+    {
+      "id": "tech-18",
+      "agent": "tech",
+      "industry": "互联网后端",
+      "competencies": ["系统设计", "数据意识"],
+      "text": "你项目里的缓存和数据库怎么保持一致？脏数据出现过吗？"
+    },
+    {
+      "id": "tech-19",
+      "agent": "tech",
+      "industry": "互联网前端",
+      "competencies": ["问题解决", "数据意识"],
+      "text": "首屏加载从 4 秒优化到 1 秒，你会按什么顺序下手？"
+    },
+    {
+      "id": "tech-20",
+      "agent": "tech",
+      "industry": "互联网前端",
+      "competencies": ["技术深度", "系统设计"],
+      "text": "讲讲你项目里状态管理的选型，遇到过什么问题？"
+    },
+    {
+      "id": "tech-21",
+      "agent": "tech",
+      "industry": "互联网前端",
+      "competencies": ["工程实践"],
+      "text": "前端怎么防 XSS 和 CSRF？你在代码里具体做了什么？"
+    },
+    {
+      "id": "tech-22",
+      "agent": "tech",
+      "industry": "互联网前端",
+      "competencies": ["工程实践", "系统设计"],
+      "text": "组件库的主题定制和按需加载，你会怎么实现？"
+    },
+    {
+      "id": "tech-23",
+      "agent": "tech",
+      "industry": "互联网前端",
+      "competencies": ["团队协作", "工程实践"],
+      "text": "前后端接口契约变化时，你怎么降低联调成本？"
+    },
+    {
+      "id": "tech-24",
+      "agent": "tech",
+      "industry": "人工智能",
+      "competencies": ["数据意识", "技术深度"],
+      "text": "你的模型为什么选这个评估指标？它覆盖不到哪些情况？"
+    },
+    {
+      "id": "tech-25",
+      "agent": "tech",
+      "industry": "人工智能",
+      "competencies": ["问题解决", "数据意识"],
+      "text": "训练数据和线上数据分布不一致，你会怎么发现和处理？"
+    },
+    {
+      "id": "tech-26",
+      "agent": "tech",
+      "industry": "人工智能",
+      "competencies": ["技术深度", "数据意识"],
+      "text": "讲一次你把模型效果提升的经历：提升了多少，怎么验证的？"
+    },
+    {
+      "id": "tech-27",
+      "agent": "tech",
+      "industry": "人工智能",
+      "competencies": ["系统设计", "工程实践"],
+      "text": "用大模型做业务时，幻觉和延迟你会怎么权衡？"
+    },
+    {
+      "id": "tech-28",
+      "agent": "tech",
+      "industry": "人工智能",
+      "competencies": ["技术深度", "问题解决"],
+      "text": "特征工程里你怎么避免数据泄漏？能举一个你踩过的坑吗？"
+    },
+    {
+      "id": "tech-29",
+      "agent": "tech",
+      "industry": "数据分析",
+      "competencies": ["数据意识", "问题解决"],
+      "text": "你做过的一次分析结论被业务推翻过吗？最后问题出在哪？"
+    },
+    {
+      "id": "tech-30",
+      "agent": "tech",
+      "industry": "数据分析",
+      "competencies": ["数据意识"],
+      "text": "怎么判断一个指标下降是季节性波动还是真的业务变化？"
+    },
+    {
+      "id": "tech-31",
+      "agent": "tech",
+      "industry": "数据分析",
+      "competencies": ["数据意识", "技术深度"],
+      "text": "AB 实验的样本量和显著性你会怎么定？说说背后的依据。"
+    },
+    {
+      "id": "tech-32",
+      "agent": "tech",
+      "industry": "数据分析",
+      "competencies": ["数据意识", "沟通表达"],
+      "text": "用户留存曲线你会怎么拆解归因？给一个具体路径。"
+    },
+    {
+      "id": "tech-33",
+      "agent": "tech",
+      "industry": "软件测试",
+      "competencies": ["工程实践", "问题解决"],
+      "text": "一个接口你会设计哪些测试用例？边界条件怎么覆盖？"
+    },
+    {
+      "id": "tech-34",
+      "agent": "tech",
+      "industry": "软件测试",
+      "competencies": ["工程实践", "问题解决"],
+      "text": "自动化用例总是不稳定，你会怎么治理？"
+    },
+    {
+      "id": "tech-35",
+      "agent": "tech",
+      "industry": "软件测试",
+      "competencies": ["数据意识", "问题解决"],
+      "text": "性能测试你会关注哪些指标？压出瓶颈后怎么定位？"
+    },
+    {
+      "id": "tech-36",
+      "agent": "tech",
+      "industry": "软件测试",
+      "competencies": ["系统设计", "工程实践"],
+      "text": "你怎么设计回归测试策略，保证每次发布不退化？"
+    },
+    {
+      "id": "tech-37",
+      "agent": "tech",
+      "industry": "嵌入式",
+      "competencies": ["问题解决", "工程实践"],
+      "text": "设备偶发死机，现场无法复现，你会怎么定位？"
+    },
+    {
+      "id": "tech-38",
+      "agent": "tech",
+      "industry": "嵌入式",
+      "competencies": ["技术深度"],
+      "text": "中断上下文里为什么不能做耗时操作？你会怎么拆分任务？"
+    },
+    {
+      "id": "tech-39",
+      "agent": "tech",
+      "industry": "嵌入式",
+      "competencies": ["系统设计", "工程实践"],
+      "text": "内存受限的设备上，你会怎么规划内存使用？"
+    },
+    {
+      "id": "tech-40",
+      "agent": "tech",
+      "industry": "嵌入式",
+      "competencies": ["工程实践", "系统设计"],
+      "text": "你怎么保证固件升级过程安全，避免设备变砖？"
+    },
+    {
+      "id": "tech-41",
+      "agent": "tech",
+      "industry": "产品运营",
+      "competencies": ["数据意识", "沟通表达"],
+      "text": "需求上线后数据没达到预期，你会怎么和产品一起复盘？"
+    },
+    {
+      "id": "tech-42",
+      "agent": "tech",
+      "industry": "产品运营",
+      "competencies": ["数据意识", "工程实践"],
+      "text": "埋点方案你会怎么设计，怎么保证数据可用？"
+    },
+    {
+      "id": "tech-43",
+      "agent": "tech",
+      "industry": "金融科技",
+      "competencies": ["技术深度", "工程实践"],
+      "text": "金额计算为什么不能用浮点数？你在项目里怎么处理？"
+    },
+    {
+      "id": "tech-44",
+      "agent": "tech",
+      "industry": "金融科技",
+      "competencies": ["系统设计", "工程实践"],
+      "text": "对账系统你会怎么设计？异常订单怎么处理？"
+    },
+    {
+      "id": "tech-45",
+      "agent": "tech",
+      "industry": "金融科技",
+      "competencies": ["系统设计", "问题解决"],
+      "text": "高并发下的账户扣减，你怎么保证不超扣、不重复？"
+    },
+    {
       "id": "prs-01",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力"],
       "text": "你简历上写「显著提升了效率」，显著是多少？没有数字的话，我很难相信。"
     },
     {
       "id": "prs-02",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力", "沟通表达"],
       "text": "这个项目听起来是团队一起做的，你怎么证明核心部分是你做的？"
     },
     {
       "id": "prs-03",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力"],
-      "text": "假设入职第一周就让你独立负责一个他没接触过的模块，做不完就要担责，你怎么应对？"
+      "text": "假设入职第一周就让你独立负责一个没接触过的模块，做不完就要担责，你怎么应对？"
     },
     {
       "id": "prs-04",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力", "问题解决"],
       "text": "你刚才的回答里有个结论我并不认同，你能重新论证一遍吗？"
     },
     {
       "id": "prs-05",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力"],
       "text": "如果这次面试结果是拒绝，你认为最可能的原因是什么？"
     },
     {
       "id": "prs-06",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力", "团队协作"],
       "text": "上线前夜发现你负责的部分有严重缺陷，但改就要延期，你会怎么决策？"
     },
     {
       "id": "prs-07",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力", "沟通表达"],
       "text": "用一分钟说服我：为什么我们应该把机会给你而不是给一个经验更丰富的人？"
     },
     {
       "id": "prs-08",
       "agent": "pressure",
+      "industry": "通用",
       "competencies": ["抗压能力", "数据意识"],
       "text": "你提到的成果里，有多少能归因于你自己？请把功劳拆开讲。"
+    },
+    {
+      "id": "prs-09",
+      "agent": "pressure",
+      "industry": "互联网后端",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "你说系统扛住了流量高峰，压测环境和线上真的一样吗？差在哪里？"
+    },
+    {
+      "id": "prs-10",
+      "agent": "pressure",
+      "industry": "互联网后端",
+      "competencies": ["抗压能力", "岗位动机"],
+      "text": "这个方案上线后出过事故吗？责任最后是怎么算的？"
+    },
+    {
+      "id": "prs-11",
+      "agent": "pressure",
+      "industry": "互联网前端",
+      "competencies": ["抗压能力", "沟通表达"],
+      "text": "你做的页面看起来很普通，凭什么说体验提升了？"
+    },
+    {
+      "id": "prs-12",
+      "agent": "pressure",
+      "industry": "互联网前端",
+      "competencies": ["抗压能力", "问题解决"],
+      "text": "兼容性问题你打算怎么让用户承担？把取舍说清楚。"
+    },
+    {
+      "id": "prs-13",
+      "agent": "pressure",
+      "industry": "人工智能",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "你的模型指标很漂亮，但业务方说没效果，你怎么解释？"
+    },
+    {
+      "id": "prs-14",
+      "agent": "pressure",
+      "industry": "人工智能",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "如果这个模型明天就下线，你能说清它到底带来了多少收益吗？"
+    },
+    {
+      "id": "prs-15",
+      "agent": "pressure",
+      "industry": "人工智能",
+      "competencies": ["抗压能力", "工程实践"],
+      "text": "训练用了多少数据、多少算力？成本你算过吗？"
+    },
+    {
+      "id": "prs-16",
+      "agent": "pressure",
+      "industry": "数据分析",
+      "competencies": ["抗压能力", "沟通表达"],
+      "text": "你的分析结论和老板的判断相反，你打算怎么开口？"
+    },
+    {
+      "id": "prs-17",
+      "agent": "pressure",
+      "industry": "数据分析",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "这个数字是你算的还是别人给你的？你怎么保证它没错？"
+    },
+    {
+      "id": "prs-18",
+      "agent": "pressure",
+      "industry": "软件测试",
+      "competencies": ["抗压能力", "问题解决"],
+      "text": "你说测试做得很充分，那线上为什么还有缺陷？"
+    },
+    {
+      "id": "prs-19",
+      "agent": "pressure",
+      "industry": "软件测试",
+      "competencies": ["抗压能力", "沟通表达"],
+      "text": "开发说没时间修你提的问题，你会怎么坚持？"
+    },
+    {
+      "id": "prs-20",
+      "agent": "pressure",
+      "industry": "嵌入式",
+      "competencies": ["抗压能力", "问题解决"],
+      "text": "现场设备出了问题，客户在等，你手上没有调试工具，怎么办？"
+    },
+    {
+      "id": "prs-21",
+      "agent": "pressure",
+      "industry": "嵌入式",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "你说功耗达标了，测试条件是什么？换一个温度呢？"
+    },
+    {
+      "id": "prs-22",
+      "agent": "pressure",
+      "industry": "产品运营",
+      "competencies": ["抗压能力", "岗位动机"],
+      "text": "这个功能是你想的还是抄竞品的？区别在哪里？"
+    },
+    {
+      "id": "prs-23",
+      "agent": "pressure",
+      "industry": "产品运营",
+      "competencies": ["抗压能力", "沟通表达"],
+      "text": "活动数据不好看，你准备用什么说辞面对领导？"
+    },
+    {
+      "id": "prs-24",
+      "agent": "pressure",
+      "industry": "金融科技",
+      "competencies": ["抗压能力", "数据意识"],
+      "text": "你经手的数据出过一次错误吗？如果造成了资金损失怎么办？"
+    },
+    {
+      "id": "prs-25",
+      "agent": "pressure",
+      "industry": "金融科技",
+      "competencies": ["抗压能力", "团队协作"],
+      "text": "合规要求和你负责的交付时间冲突，你听谁的？"
+    },
+    {
+      "id": "prs-26",
+      "agent": "pressure",
+      "industry": "金融科技",
+      "competencies": ["抗压能力", "工程实践"],
+      "text": "你说系统是安全的，渗透测试做过吗？结果怎么样？"
     }
   ]
 }

@@ -67,6 +67,27 @@ def test_fill_sample_buttons_populate_text_areas(app: AppTest):
     assert "后端开发实习生" in app.text_area(key="jd_text").value
 
 
+def test_setup_page_offers_industry_selector(app: AppTest):
+    selectbox = app.selectbox(key="industry")
+    assert selectbox.value == "自动"
+    options = list(selectbox.options)
+    assert options[0] == "自动"
+    assert "互联网后端" in options
+    assert "金融科技" in options
+
+
+def test_selected_industry_flows_into_session(app: AppTest):
+    app.text_area(key="resume_text").set_value(RESUME_TEXT)
+    app.text_area(key="jd_text").set_value(JD_TEXT)
+    app.selectbox(key="industry").select("金融科技")
+    app.run()
+    _button(app, "开始面试").click()
+    app.run()
+    session = app.session_state["session"]
+    assert session.industry == "金融科技"
+    assert session.phase.value == "interview"
+
+
 def test_full_interview_reaches_report(app: AppTest):
     app.text_area(key="resume_text").set_value(RESUME_TEXT)
     app.text_area(key="jd_text").set_value(JD_TEXT)

@@ -19,8 +19,15 @@ class ToolProvider(Protocol):
     def check_resume_quality(self, text: str) -> dict[str, Any]: ...
     def match_competencies(self, competencies: Sequence[Mapping[str, Any]]) -> dict[str, Any]: ...
     def pick_questions(
-        self, competencies: Sequence[str], agent: str, count: int, seed: int | None = None
+        self,
+        competencies: Sequence[str],
+        agent: str,
+        count: int,
+        seed: int | None = None,
+        industry: str | None = None,
     ) -> list[dict[str, Any]]: ...
+    def list_industries(self) -> list[str]: ...
+    def detect_industry(self, jd_text: str) -> str: ...
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]
     ) -> dict[str, Any]: ...
@@ -41,9 +48,20 @@ class LocalTools:
         return toolkit.match_competencies(competencies)
 
     def pick_questions(
-        self, competencies: Sequence[str], agent: str, count: int, seed: int | None = None
+        self,
+        competencies: Sequence[str],
+        agent: str,
+        count: int,
+        seed: int | None = None,
+        industry: str | None = None,
     ) -> list[dict[str, Any]]:
-        return toolkit.select_questions(competencies, agent, count, seed)
+        return toolkit.select_questions(competencies, agent, count, seed, industry)
+
+    def list_industries(self) -> list[str]:
+        return toolkit.list_industries()
+
+    def detect_industry(self, jd_text: str) -> str:
+        return toolkit.detect_job_industry(jd_text)
 
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]
@@ -85,7 +103,12 @@ class MCPTools:
         )
 
     def pick_questions(
-        self, competencies: Sequence[str], agent: str, count: int, seed: int | None = None
+        self,
+        competencies: Sequence[str],
+        agent: str,
+        count: int,
+        seed: int | None = None,
+        industry: str | None = None,
     ) -> list[dict[str, Any]]:
         return self._call(
             "pick_questions",
@@ -94,8 +117,15 @@ class MCPTools:
                 "agent": agent,
                 "count": count,
                 "seed": seed,
+                "industry": industry,
             },
         )
+
+    def list_industries(self) -> list[str]:
+        return self._call("list_industries", {})
+
+    def detect_industry(self, jd_text: str) -> str:
+        return self._call("detect_industry", {"jd_text": jd_text})
 
     def aggregate_scores(
         self, turns: Sequence[Mapping[str, Any]], weights: Mapping[str, float]

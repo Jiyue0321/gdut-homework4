@@ -18,6 +18,8 @@ def render_report(session, tools, *, export_name: str = "面试复盘报告") ->
     col1.metric("加权总分", f"{data.get('overall_score', 0)} / 5")
     col2.metric("面试用时题数", f"{len(session.turns)} 题")
     col3.metric("结论", data.get("verdict", ""))
+    if session.industry and session.industry != "通用":
+        st.caption(f"目标行业：{session.industry}（面试官参考了该行业的题库题目）")
 
     measured = {name: float(v) for name, v in (data.get("dimensions") or {}).items()}
     figure = radar_chart(session.radar, measured)

@@ -58,6 +58,57 @@ def test_plan_respects_max_questions():
     assert len(session.plan.slots) == 3
 
 
+def test_industry_is_auto_detected_from_jd():
+    session = make_orchestrator(build_fake_llm()).start(
+        RESUME_TEXT, "负责后端服务开发，使用 Java、Spring 与 MySQL。", "后端开发实习生"
+    )
+    assert session.industry == "互联网后端"
+
+
+def test_configured_industry_overrides_detection():
+    config = InterviewConfig(industry="金融科技")
+    session = make_orchestrator(build_fake_llm(), config).start(RESUME_TEXT, JD_TEXT, "岗位")
+    assert session.industry == "金融科技"
+
+
+def test_report_data_carries_industry():
+    session = make_orchestrator(build_fake_llm(), InterviewConfig(industry="数据分析")).start(
+        RESUME_TEXT, JD_TEXT, "岗位"
+    )
+    orchestrator = make_orchestrator(build_fake_llm(), InterviewConfig(industry="数据分析"))
+    for _ in range(20):
+        if session.finished or session.error:
+            break
+        session = orchestrator.answer(session, "回答")
+    assert session.report_data["industry"] == "数据分析"
+
+
+def _interviewer_prompt(llm) -> str:
+    from agent.state import TurnDecision
+
+    call = next(call for call in llm.calls if call[0] is TurnDecision)
+    return call[1][0]["content"]
+
+
+def test_interviewer_prompt_receives_bank_questions():
+    llm = build_fake_llm()
+    make_orchestrator(llm, InterviewConfig(industry="互联网后端")).start(
+        RESUME_TEXT, JD_TEXT, "后端开发实习生"
+    )
+    system_prompt = _interviewer_prompt(llm)
+    assert "同行业参考题" in system_prompt
+    assert "互联网后端" in system_prompt
+    assert "- " in system_prompt.split("同行业参考题")[1].split("要求")[0]
+
+
+def test_bank_hints_can_be_disabled():
+    llm = build_fake_llm()
+    make_orchestrator(llm, InterviewConfig(bank_questions_per_slot=0)).start(
+        RESUME_TEXT, JD_TEXT, "岗位"
+    )
+    assert "（无，自行设计问题）" in _interviewer_prompt(llm)
+
+
 def test_full_interview_reaches_done_with_report():
     session = make_orchestrator(build_fake_llm()).start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
     orchestrator = make_orchestrator(build_fake_llm())

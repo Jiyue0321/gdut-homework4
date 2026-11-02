@@ -11,6 +11,8 @@ EXPECTED = {
     "match_competencies",
     "pick_questions",
     "list_competencies",
+    "list_industries",
+    "detect_industry",
     "aggregate_scores",
     "merge_cross_exam",
     "render_report_md",

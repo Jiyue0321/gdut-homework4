@@ -32,8 +32,10 @@ def _get_context():
     return client, tools, config
 
 
-def _new_interview(client, tools, resume_text: str, jd_text: str, role_title: str):
-    orchestrator = Orchestrator(client, tools, InterviewConfig())
+def _new_interview(
+    client, tools, resume_text: str, jd_text: str, role_title: str, industry: str
+):
+    orchestrator = Orchestrator(client, tools, InterviewConfig(industry=industry))
     with st.spinner("面试官正在阅读你的简历与岗位要求…"):
         session = orchestrator.start(resume_text, jd_text, role_title)
     if session.error:
@@ -44,12 +46,26 @@ def _new_interview(client, tools, resume_text: str, jd_text: str, role_title: st
     return session
 
 
+def _industries() -> list[str]:
+    """录入页需要行业下拉项；取不到时退化为「自动/通用」，不阻塞填表。"""
+    cached = st.session_state.get("industries")
+    if cached is not None:
+        return cached
+    try:
+        config = load_config()
+        names = open_tools(config).list_industries() if config.configured else []
+    except Exception:
+        names = []
+    st.session_state.industries = names
+    return names
+
+
 def main() -> None:
     interview.hero()
 
     session = st.session_state.get("session")
     if session is None:
-        inputs = interview.setup_form()
+        inputs = interview.setup_form(_industries())
         if inputs:
             client, tools, _ = _get_context()
             _new_interview(client, tools, *inputs)

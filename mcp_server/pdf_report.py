@@ -117,7 +117,11 @@ def _table(header: list[str], rows: list[list[Any]], widths: list[float] | None 
 def _headline(report: Mapping[str, Any], story: list[Any]) -> None:
     title = report.get("role_title") or "模拟面试"
     story.append(_para(f"{title} · 面试复盘报告", "title"))
-    story.append(_para("由「面面俱到」模拟面试多智能体生成", "subtitle"))
+    subtitle = "由「面面俱到」模拟面试多智能体生成"
+    industry = report.get("industry")
+    if industry and industry != "通用":
+        subtitle += f"　|　目标行业：{industry}"
+    story.append(_para(subtitle, "subtitle"))
     story.append(Spacer(1, 8))
 
     score = report.get("overall_score", 0)

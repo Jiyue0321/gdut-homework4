@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Sequence
 
 from agent.agents.resume import ChatClient
 from agent.prompts import INTERVIEWER
@@ -20,6 +20,8 @@ def build_messages(
     last_question: str | None = None,
     last_answer: str | None = None,
     is_last_slot: bool = False,
+    industry: str = "通用",
+    bank_questions: Sequence[str] = (),
 ) -> list[dict[str, Any]]:
     """面试官提示：只带最近一轮问答与当前考察点，避免长篇简历反复计费。"""
     system = INTERVIEWER.format(
@@ -27,9 +29,11 @@ def build_messages(
         focus=slot.focus,
         competency=slot.competency,
         role_title=role_title,
+        industry=industry or "通用",
         summary=profile.summary,
         highlights="；".join(profile.highlights) or "（无）",
         concerns="；".join(profile.concerns) or "（无）",
+        bank_hints="\n".join(f"- {text}" for text in bank_questions) or "- （无，自行设计问题）",
     )
     tasks = [
         "本次输出包含两部分：",
@@ -77,6 +81,8 @@ def ask(
     last_question: str | None = None,
     last_answer: str | None = None,
     is_last_slot: bool = False,
+    industry: str = "通用",
+    bank_questions: Sequence[str] = (),
 ) -> TurnDecision:
     decision = client.chat_json(
         build_messages(
@@ -86,6 +92,8 @@ def ask(
             last_question=last_question,
             last_answer=last_answer,
             is_last_slot=is_last_slot,
+            industry=industry,
+            bank_questions=bank_questions,
         ),
         TurnDecision,
         temperature=0.7,

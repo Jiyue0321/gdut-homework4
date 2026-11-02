@@ -11,7 +11,12 @@ from typing import Any, Mapping, Sequence
 
 from mcp_server import rubric
 from mcp_server.pdf_report import render_report_pdf as _render_report_pdf
-from mcp_server.question_bank import competencies_in_bank, pick_questions
+from mcp_server.question_bank import (
+    competencies_in_bank,
+    detect_industry,
+    industries_in_bank,
+    pick_questions,
+)
 from mcp_server.sandbox import SandboxError, display_path, resolve_safe
 
 SECTION_HINTS = {
@@ -111,6 +116,9 @@ def render_report_md(report: Mapping[str, Any]) -> str:
     title = report.get("role_title") or "模拟面试"
     lines.append(f"# {title} · 面试复盘报告")
     lines.append("")
+    industry = report.get("industry")
+    if industry and industry != "通用":
+        lines.append(f"**目标行业：{industry}**  ")
     lines.append(f"**加权总分：{report.get('overall_score', 0)} / 5**  ")
     lines.append(f"**结论：{report.get('verdict', '')}**")
     lines.append("")
@@ -242,7 +250,19 @@ def list_question_competencies() -> list[str]:
     return competencies_in_bank()
 
 
+def list_industries() -> list[str]:
+    return industries_in_bank()
+
+
+def detect_job_industry(jd_text: str) -> str:
+    return detect_industry(jd_text)
+
+
 def select_questions(
-    competencies: Sequence[str], agent: str, count: int, seed: int | None = None
+    competencies: Sequence[str],
+    agent: str,
+    count: int,
+    seed: int | None = None,
+    industry: str | None = None,
 ) -> list[dict[str, Any]]:
-    return pick_questions(competencies, agent, count, seed)
+    return pick_questions(competencies, agent, count, seed, industry)
