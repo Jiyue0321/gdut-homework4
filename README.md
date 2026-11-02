@@ -10,9 +10,11 @@
 
 - **简历 × 岗位缺口雷达**：把 JD 要求、简历自评、面试实测三组能力画在同一张雷达图上
 - **三类面试官**：HR、技术、压力面试官各有考察侧重与评分口径
+- **行业定制题库**：98 道参考题覆盖后端、前端、AI、数据分析、测试、嵌入式、产品运营、金融科技
+  等 9 个行业，按 JD 自动识别或手动指定
 - **自适应追问**：回答含糊或缺量化依据时，追问一次
 - **交叉拷问**：针对最弱的一题，三位面试官轮流发难并独立打分
-- **复盘报告**：加权总分、逐题证据、改进建议与话术模板，可导出 Markdown
+- **复盘报告**：加权总分、逐题证据、改进建议与话术模板，可导出 Markdown 或 PDF
 
 ## 架构
 
@@ -23,7 +25,7 @@ Streamlit 界面（5 步向导）
        ├─ agent/llm.py        结构化 JSON 输出（OpenAI 兼容接口）
        └─ agent/tools.py      ToolProvider ─┬─ LocalTools（进程内直调）
                                             └─ MCPTools（stdio 子进程）
-                 └─ mcp_server/interview_server.py  确定性工具：缺口匹配、抽题、评分聚合、报告渲染
+                 └─ mcp_server/interview_server.py  确定性工具：缺口匹配、抽题、评分聚合、报告渲染（MD/PDF）
 ```
 
 设计取向：**智能体的自主性用在提问与追问，关键流程由代码保证可复现、可测试。**
@@ -79,4 +81,3 @@ OPENAI_MODEL = "deepseek-chat"
 ## 文档
 
 - [需求分析文档](docs/requirements.md)
-- [架构说明](docs/architecture.md)
