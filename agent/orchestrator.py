@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, Sequence
 
+from agent import intent
 from agent.agents import evaluator, interviewers, jd, report, resume
 from agent.mcp_client import ToolError
 from agent.state import (
@@ -176,6 +177,12 @@ class Orchestrator:
             return session
 
         session.error = ""
+        verdict = intent.check_answer(answer_text)
+        if not verdict.valid:
+            # 非答题内容（报错反馈、测试吐槽、误触）：不打分、不推进，直接退回重填。
+            session.error = verdict.message
+            return session
+
         try:
             slot = self._current_slot(session)
             last_slot = self._is_last_slot(session)
@@ -216,6 +223,23 @@ class Orchestrator:
                 self._finish(session)
             else:
                 self._ask_next_question(session)
+        except Exception as exc:
+            session.error = _friendly_error(exc)
+        return session
+
+    def retry(self, session: InterviewSession) -> InterviewSession:
+        """上次出题或复盘失败后，从当前阶段重试一次，避免用户只能重开面试。"""
+        session.error = ""
+        try:
+            if session.phase in {Phase.REPORT, Phase.DONE}:
+                self._evaluate_and_report(session)
+            elif session.phase == Phase.CROSS_EXAM:
+                self._finish(session)
+            elif session.phase == Phase.INTERVIEW:
+                if session.current_question is None and session.plan is not None:
+                    self._ask_next_question(session)
+                if session.current_question is None:
+                    session.error = "仍然没有拿到题目，请稍后再试或重新开始面试"
         except Exception as exc:
             session.error = _friendly_error(exc)
         return session

@@ -6,6 +6,7 @@ from typing import Any
 
 import streamlit as st
 
+from agent import intent
 from agent.state import AGENT_LABELS, Phase
 
 SAMPLE_RESUME = """\
@@ -224,7 +225,10 @@ def interview_body(session) -> str | None:
 
     question = session.current_question
     if question is None:
-        st.warning("面试官正在整理问题，请稍候。")
+        # 出题/复盘出错时不能无限「请稍候」，给用户明确的兜底出口。
+        st.warning("面试官没有拿到下一题，可能是网络或模型暂时不可用。")
+        if session.error:
+            st.error(session.error)
         return None
 
     label = agent_badge(session.current_agent)
@@ -248,8 +252,9 @@ def interview_body(session) -> str | None:
         )
         submitted = st.form_submit_button("提交回答", type="primary", width='stretch')
     if submitted:
-        if not answer.strip():
-            st.warning("回答不能为空。")
+        verdict = intent.check_answer(answer, min_chars=intent.MIN_ANSWER_CHARS)
+        if not verdict.valid:
+            st.warning(verdict.message)
             return None
         return answer.strip()
     return None

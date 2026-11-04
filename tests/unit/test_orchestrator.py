@@ -219,3 +219,73 @@ def test_qa_pairs_expose_competency_and_labels():
 )
 def test_friendly_error_mapping(message, expected):
     assert expected in _friendly_error(RuntimeError(message))
+
+
+def test_system_feedback_does_not_advance_interview():
+    from agent.state import TurnDecision
+
+    llm = build_fake_llm()
+    orchestrator = make_orchestrator(llm)
+    session = orchestrator.start(RESUME_TEXT, JD_TEXT, "岗位")
+    before = len(session.turns)
+    calls_before = len(llm.calls)
+
+    session = orchestrator.answer(
+        session, "这个报错是典型的大模型输出格式异常，JSONDecodeError 堆栈一直转圈"
+    )
+    assert len(session.turns) == before
+    assert session.error
+    assert session.slot_index == 0
+    assert len(llm.calls) == calls_before  # 未调用模型打分
+    assert session.current_question is not None
+
+
+def test_retry_regenerates_missing_question():
+    class FlakyLLM:
+        """第一次出题返回空问题，重试时恢复正常。"""
+
+        def __init__(self) -> None:
+            self._inner = build_fake_llm()
+            self._calls = 0
+
+        def chat_json(self, messages, schema, **kwargs):
+            from agent.state import TurnDecision
+
+            if schema is TurnDecision:
+                self._calls += 1
+                if self._calls == 1:
+                    return TurnDecision(score=None, question=None, is_followup=False)
+            return self._inner.chat_json(messages, schema, **kwargs)
+
+    llm = FlakyLLM()
+    orchestrator = make_orchestrator(llm)
+    session = orchestrator.start(RESUME_TEXT, JD_TEXT, "岗位")
+    assert session.current_question is None
+    assert session.phase.value == "interview"
+
+    session = orchestrator.retry(session)
+    assert session.current_question is not None
+
+
+def test_retry_regenerates_failed_report():
+    from agent.state import FinalReport
+
+    llm = build_fake_llm()
+    responses = llm.responses
+    original = responses.pop(FinalReport)
+
+    orchestrator = make_orchestrator(llm)
+    session = orchestrator.start(RESUME_TEXT, JD_TEXT, "岗位")
+    steps = 0
+    # 报告阶段缺映射会抛 KeyError，被 answer 捕获成 error，phase 停在 report
+    while session.phase.value != "report" and session.error == "" and steps < 20:
+        session = orchestrator.answer(session, "我用唯一索引保证幂等，压测 QPS 从 200 提到 900。")
+        steps += 1
+    assert session.phase.value == "report"
+    assert session.narrative == {}
+    assert session.report_data.get("overall_score") is not None
+
+    responses[FinalReport] = original
+    session = orchestrator.retry(session)
+    assert session.phase.value == "done"
+    assert session.narrative["action_plan"]
