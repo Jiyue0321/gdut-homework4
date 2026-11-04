@@ -46,6 +46,11 @@ Streamlit 界面（5 步向导）
 
 ## 快速开始
 
+**Windows 一键启动**：双击 `start.bat`。脚本会自动创建 `.venv`、安装依赖、
+在缺少 `.env` 时从模板复制一份并打开编辑，然后启动服务。
+
+手动启动：
+
 ```bash
 python -m venv .venv
 .venv\Scripts\activate          # macOS / Linux: source .venv/bin/activate
