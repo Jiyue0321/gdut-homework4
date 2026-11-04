@@ -51,6 +51,16 @@ def test_mcp_roundtrip_is_consistent_with_local_tools():
     assert MCPTools().match_competencies(payload) == LocalTools().match_competencies(payload)
 
 
+def test_mcp_renders_markdown_report():
+    """render_report_md 返回纯 Markdown，不能按 JSON 解析。"""
+    from agent.tools import LocalTools, MCPTools
+
+    report = {"role_title": "后端开发实习生", "overall_score": 3.2, "verdict": "基本达标"}
+    markdown = MCPTools().render_report_md(report)
+    assert markdown.startswith("# ")
+    assert markdown == LocalTools().render_report_md(report)
+
+
 def test_mcp_renders_pdf_ipc_payload():
     from agent.tools import MCPTools
 

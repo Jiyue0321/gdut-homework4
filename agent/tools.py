@@ -98,6 +98,17 @@ class MCPTools:
         async with MCPToolClient() as client:
             return await client.call_tool_json(name, arguments)
 
+    def _call_text(self, name: str, arguments: dict[str, Any]) -> str:
+        """工具返回的是纯文本（如 Markdown 报告），不做 JSON 解析。"""
+        return asyncio.run(self._call_text_async(name, arguments))
+
+    async def _call_text_async(self, name: str, arguments: dict[str, Any]) -> str:
+        async with MCPToolClient() as client:
+            text = await client.call_tool(name, arguments)
+        if text.startswith(("错误", "工具执行出错")):
+            raise ToolError(text)
+        return text
+
     def check_resume_quality(self, text: str) -> dict[str, Any]:
         return self._call("check_resume_quality", {"text": text})
 
@@ -154,7 +165,7 @@ class MCPTools:
         )
 
     def render_report_md(self, report: Mapping[str, Any]) -> str:
-        return self._call(
+        return self._call_text(
             "render_report_md", {"report_json": json.dumps(report, ensure_ascii=False)}
         )
 
