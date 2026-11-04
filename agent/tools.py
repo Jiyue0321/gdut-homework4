@@ -11,7 +11,7 @@ import json
 from typing import Any, Mapping, Protocol, Sequence
 
 from agent.config import LLMConfig
-from agent.mcp_client import MCPToolClient
+from agent.mcp_client import MCPToolClient, _server_for
 from mcp_server import toolkit
 
 
@@ -89,22 +89,41 @@ class LocalTools:
 
 
 class MCPTools:
-    """通过 stdio 子进程调用 MCP 工具服务，每次调用复用同一套 JSON 契约。"""
+    """通过 stdio 子进程调用 MCP 工具服务。
+
+    子进程常驻复用：早期实现每次调用都重新拉起进程，单次约 1 秒，
+    一次面试累计二十余次，会把容器 CPU 占满并拖垮静态资源。
+    """
+
+    def _server(self):
+        return _server_for("mcp_server.interview_server")
+
+    def _run(self, factory) -> Any:
+        server = self._server()
+        try:
+            return server.run(factory)
+        except Exception:
+            # 子进程可能已崩溃或管道断开，重置后重试一次。
+            try:
+                asyncio.run_coroutine_threadsafe(server.reset(), server._ensure_loop()).result(5)
+            except Exception:
+                pass
+            return server.run(factory)
 
     def _call(self, name: str, arguments: dict[str, Any]) -> Any:
-        return asyncio.run(self._call_async(name, arguments))
+        return self._run(lambda client: self._call_async(client, name, arguments))
 
-    async def _call_async(self, name: str, arguments: dict[str, Any]) -> Any:
-        async with MCPToolClient() as client:
-            return await client.call_tool_json(name, arguments)
+    @staticmethod
+    async def _call_async(client: MCPToolClient, name: str, arguments: dict[str, Any]) -> Any:
+        return await client.call_tool_json(name, arguments)
 
     def _call_text(self, name: str, arguments: dict[str, Any]) -> str:
         """工具返回的是纯文本（如 Markdown 报告），不做 JSON 解析。"""
-        return asyncio.run(self._call_text_async(name, arguments))
+        return self._run(lambda client: self._call_text_async(client, name, arguments))
 
-    async def _call_text_async(self, name: str, arguments: dict[str, Any]) -> str:
-        async with MCPToolClient() as client:
-            text = await client.call_tool(name, arguments)
+    @staticmethod
+    async def _call_text_async(client: MCPToolClient, name: str, arguments: dict[str, Any]) -> str:
+        text = await client.call_tool(name, arguments)
         if text.startswith(("错误", "工具执行出错")):
             raise ToolError(text)
         return text

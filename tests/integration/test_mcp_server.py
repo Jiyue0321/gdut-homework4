@@ -61,6 +61,25 @@ def test_mcp_renders_markdown_report():
     assert markdown == LocalTools().render_report_md(report)
 
 
+def test_mcp_reuses_one_subprocess():
+    """多次调用应复用常驻子进程，不能每次冷启动一个（否则会拖垮容器）。"""
+    import time
+
+    from agent.tools import MCPTools
+
+    tools = MCPTools()
+    payload = [{"name": "系统设计", "required_level": 4, "resume_level": 2}]
+    tools.match_competencies(payload)  # 预热，触发子进程拉起
+
+    started = time.perf_counter()
+    for _ in range(10):
+        tools.match_competencies(payload)
+    elapsed = time.perf_counter() - started
+
+    # 冷启动单次约 1 秒；复用后 10 次远低于这个量级。
+    assert elapsed < 1.0, f"10 次调用耗时 {elapsed:.2f}s，疑似每次都在重起子进程"
+
+
 def test_mcp_renders_pdf_ipc_payload():
     from agent.tools import MCPTools
 
