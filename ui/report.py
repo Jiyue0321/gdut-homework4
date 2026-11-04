@@ -30,23 +30,14 @@ def render_report(session, tools, *, export_name: str = "面试复盘报告") ->
     if session.cross_exam:
         render_cross_exam(session.cross_exam)
 
-    left, right = st.columns(2)
-    with left:
-        st.markdown("### 你的优势")
-        for item in session.narrative.get("strengths", []):
-            st.markdown(f"- {item}")
-        st.markdown("### 待改进")
-        for item in session.narrative.get("improvements", []):
-            st.markdown(f"- {item}")
-    with right:
-        st.markdown("### 行动清单")
-        for index, item in enumerate(session.narrative.get("action_plan", []), start=1):
-            st.markdown(f"{index}. {item}")
-
-    sample = session.narrative.get("sample_answer")
-    if sample:
-        st.markdown("### 参考答案示范")
-        st.info(sample)
+    narrative = session.narrative or {}
+    if narrative:
+        _render_narrative(narrative)
+    else:
+        st.warning("复盘文字结论尚未生成（模型超时或输出异常）。上面的评分与雷达图是确定性结果，可放心查看。")
+        if session.error:
+            st.error(session.error)
+        st.caption("点击下方按钮可重试生成文字结论，无需重开面试。")
 
     warnings = data.get("warnings") or []
     if warnings:
@@ -55,6 +46,26 @@ def render_report(session, tools, *, export_name: str = "面试复盘报告") ->
             st.warning(warning)
 
     _render_export(session, tools, export_name)
+
+
+def _render_narrative(narrative: dict[str, Any]) -> None:
+    left, right = st.columns(2)
+    with left:
+        st.markdown("### 你的优势")
+        for item in narrative.get("strengths", []):
+            st.markdown(f"- {item}")
+        st.markdown("### 待改进")
+        for item in narrative.get("improvements", []):
+            st.markdown(f"- {item}")
+    with right:
+        st.markdown("### 行动清单")
+        for index, item in enumerate(narrative.get("action_plan", []), start=1):
+            st.markdown(f"{index}. {item}")
+
+    sample = narrative.get("sample_answer")
+    if sample:
+        st.markdown("### 参考答案示范")
+        st.info(sample)
 
 
 def render_cross_exam(cross_exam) -> None:
@@ -67,7 +78,12 @@ def render_cross_exam(cross_exam) -> None:
 
 
 def _render_export(session, tools, base_name: str) -> None:
-    markdown = tools.render_report_md(session.report_data)
+    try:
+        markdown = tools.render_report_md(session.report_data)
+        pdf = tools.render_report_pdf(session.report_data)
+    except Exception as exc:
+        st.warning(f"报告导出暂不可用：{str(exc)[:120]}")
+        return
     left, right = st.columns(2)
     left.download_button(
         "下载复盘报告（Markdown）",
@@ -78,7 +94,7 @@ def _render_export(session, tools, base_name: str) -> None:
     )
     right.download_button(
         "下载复盘报告（PDF）",
-        data=tools.render_report_pdf(session.report_data),
+        data=pdf,
         file_name=f"{base_name}.pdf",
         mime="application/pdf",
         width="stretch",

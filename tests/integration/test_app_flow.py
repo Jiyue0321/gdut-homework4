@@ -194,7 +194,7 @@ def test_report_page_renders_scores_and_export(app: AppTest):
         session = app.session_state["session"]
         if session.phase.value in {"done", "report"}:
             break
-        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("回答")
+        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("我用唯一索引保证幂等，压测 QPS 从 200 提到 900。")
         _button(app, "提交回答").click()
         app.run()
 
@@ -216,7 +216,7 @@ def test_report_page_shows_cross_exam_and_improvements(app: AppTest):
         session = app.session_state["session"]
         if session.phase.value in {"done", "report"}:
             break
-        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("回答")
+        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("我用唯一索引保证幂等，压测 QPS 从 200 提到 900。")
         _button(app, "提交回答").click()
         app.run()
 
@@ -246,7 +246,7 @@ def test_restart_button_returns_to_setup(app: AppTest):
         session = app.session_state["session"]
         if session.phase.value in {"done", "report"}:
             break
-        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("回答")
+        app.text_area(key=f"answer_input_{len(session.turns)}").set_value("我用唯一索引保证幂等，压测 QPS 从 200 提到 900。")
         _button(app, "提交回答").click()
         app.run()
 
@@ -254,3 +254,24 @@ def test_restart_button_returns_to_setup(app: AppTest):
     app.run()
     assert "session" not in app.session_state
     assert any("填写简历和 JD" in info.value for info in app.info)
+
+
+def test_system_feedback_answer_is_rejected_without_scoring(app: AppTest):
+    app.text_area(key="resume_text").set_value(RESUME_TEXT)
+    app.text_area(key="jd_text").set_value(JD_TEXT)
+    app.run()
+    _button(app, "开始面试").click()
+    app.run()
+
+    session = app.session_state["session"]
+    app.text_area(key=f"answer_input_{len(session.turns)}").set_value(
+        "这个报错是典型的大模型输出格式异常，JSONDecodeError 堆栈一直转圈"
+    )
+    _button(app, "提交回答").click()
+    app.run()
+
+    assert not app.exception, [e.value for e in app.exception]
+    session = app.session_state["session"]
+    assert len(session.turns) == 0
+    assert session.slot_index == 0
+    assert any("系统问题" in w.value for w in app.warning)

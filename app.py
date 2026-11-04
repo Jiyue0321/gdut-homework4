@@ -89,7 +89,12 @@ def main() -> None:
 
     if session.phase in {Phase.REPORT, Phase.DONE}:
         report.render_report(session, tools)
-        if st.button("再面一次", width='stretch'):
+        if not session.narrative and st.button("重新生成复盘结论", width="stretch"):
+            with st.spinner("正在重新生成复盘结论…"):
+                session = orchestrator.retry(session)
+            st.session_state.session = session
+            st.rerun()
+        if st.button("再面一次", width="stretch"):
             st.session_state.pop("session", None)
             st.session_state.pop("orchestrator", None)
             st.rerun()
@@ -103,6 +108,13 @@ def main() -> None:
         if session.error:
             st.error(session.error)
         st.rerun()
+
+    if session.current_question is None and session.error:
+        if st.button("重试当前步骤", width="stretch"):
+            with st.spinner("正在重试…"):
+                session = orchestrator.retry(session)
+            st.session_state.session = session
+            st.rerun()
 
 
 if __name__ == "__main__":
