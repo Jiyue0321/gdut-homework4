@@ -11,7 +11,6 @@ from typing import Any, Mapping, Sequence
 
 from mcp_server import rubric
 from mcp_server.document import extract_document as _extract_document
-from mcp_server.pdf_report import render_report_pdf as _render_report_pdf
 from mcp_server.question_bank import (
     competencies_in_bank,
     detect_industry,
@@ -225,7 +224,9 @@ def export_report(filename: str, content: str) -> dict[str, Any]:
 
 def render_report_pdf_bytes(report: Mapping[str, Any]) -> bytes:
     """把报告数据渲染成 PDF 字节流（中文 A4）。"""
-    return _render_report_pdf(report, generated_at=get_current_time())
+    from mcp_server.pdf_report import render_report_pdf
+
+    return render_report_pdf(report, generated_at=get_current_time())
 
 
 def export_report_pdf(filename: str, report: Mapping[str, Any]) -> dict[str, Any]:
