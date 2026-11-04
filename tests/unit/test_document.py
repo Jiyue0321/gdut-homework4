@@ -91,3 +91,19 @@ def test_extract_rejects_corrupted_pdf():
 def test_extract_rejects_whitespace_only_text():
     with pytest.raises(document.DocumentError, match="没有可用文字"):
         document.extract_document("resume.txt", b"   \n\n  ")
+
+
+def test_extract_strips_invisible_characters_and_normalizes_whitespace():
+    raw = "教育背景​：广东工业大学﻿ 软件工程\r\n\r\n\r\n\r\n项目：订单".encode("utf-8")
+    result = document.extract_document("resume.txt", raw)
+    assert "​" not in result["text"]
+    assert "﻿" not in result["text"]
+    assert "\r" not in result["text"]
+    assert "\n\n\n" not in result["text"]
+    assert "广东工业大学" in result["text"]
+
+
+def test_extract_utf16_text_file():
+    data = "岗位职责：后端开发与性能优化".encode("utf-16")
+    result = document.extract_document("jd.txt", data)
+    assert "后端开发" in result["text"]
