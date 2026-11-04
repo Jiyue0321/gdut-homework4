@@ -28,12 +28,12 @@ def run_interview(config: InterviewConfig | None = None):
     return session
 
 
-def test_golden_interview_produces_stable_report():
+def test_golden_interview_produces_stable_report(request):
     session = run_interview()
     assert session.phase == Phase.DONE, session.error
     markdown = LocalTools().render_report_md(session.report_data)
 
-    if not GOLDEN.exists() or "--update-golden" in _argv():
+    if not GOLDEN.exists() or request.config.getoption("--update-golden"):
         GOLDEN.parent.mkdir(parents=True, exist_ok=True)
         GOLDEN.write_text(markdown, encoding="utf-8")
         pytest.skip("已生成 golden 快照")
@@ -55,9 +55,3 @@ def test_report_score_matches_aggregation():
     assert session.report_data["overall_score"] == expected["overall_score"]
     assert session.report_data["dimensions"] == expected["dimensions"]
     assert session.report_data["verdict"] == expected["verdict"]
-
-
-def _argv() -> list[str]:
-    import sys
-
-    return sys.argv

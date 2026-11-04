@@ -7,6 +7,16 @@ import pytest
 from agent.state import FinalReport
 from tests.fakes import FakeLLM, default_responses
 
+
+def pytest_addoption(parser) -> None:
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="重新生成 tests/fixtures/golden 下的快照",
+    )
+
+
 RESUME_TEXT = """\
 教育背景：广东工业大学 软件工程 本科 2022-2026
 实习经历：某互联网公司 后端开发实习 2025.07-2025.09

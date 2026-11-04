@@ -58,6 +58,34 @@ def test_plan_respects_max_questions():
     assert len(session.plan.slots) == 3
 
 
+def test_same_interviewer_does_not_repeat_competency():
+    """JD 只提炼出 3 个能力时，同一面试官两轮不能问同一个能力。"""
+    session = make_orchestrator(build_fake_llm(), InterviewConfig(max_questions=6)).start(
+        RESUME_TEXT, JD_TEXT, "后端开发实习生"
+    )
+    by_agent: dict[str, list[str]] = {}
+    for slot in session.plan.slots:
+        by_agent.setdefault(slot.agent, []).append(slot.competency)
+    for agent, names in by_agent.items():
+        assert len(names) == len(set(names)), f"{agent} 重复考察：{names}"
+
+
+def test_bank_hints_change_between_rounds():
+    """同一面试官第二次出题拿到的参考题应与第一次不同。"""
+    session = make_orchestrator(build_fake_llm(), InterviewConfig(max_questions=6)).start(
+        RESUME_TEXT, JD_TEXT, "后端开发实习生"
+    )
+    orchestrator = make_orchestrator(build_fake_llm())
+    slot = session.plan.slots[1]  # tech 的第一题
+    first_round = orchestrator._bank_hints(session, slot)
+
+    session.turns.append(object())  # type: ignore[arg-type]
+    second_round = orchestrator._bank_hints(session, slot)
+
+    assert first_round and second_round
+    assert first_round != second_round
+
+
 def test_industry_is_auto_detected_from_jd():
     session = make_orchestrator(build_fake_llm()).start(
         RESUME_TEXT, "负责后端服务开发，使用 Java、Spring 与 MySQL。", "后端开发实习生"

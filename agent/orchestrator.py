@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import zlib
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -257,13 +258,21 @@ class Orchestrator:
             return "通用"
 
     def _bank_hints(self, session: InterviewSession, slot: Slot) -> list[str]:
-        """取同行业、同角色的题库题目作为参考，失败时静默降级为空。"""
+        """取同行业、同角色的题库题目作为参考，失败时静默降级为空。
+
+        以「能力 + 已出过的题数」做种子：同一轮反复重试拿到的参考题一致，
+        但下一题会换一批，避免面试官在两轮里引用同一组参考题而问出雷同的问题。
+        """
         count = self._config.bank_questions_per_slot
         if count <= 0:
             return []
         try:
             picked = self._tools.pick_questions(
-                [slot.competency], slot.agent, count, industry=session.industry
+                [slot.competency],
+                slot.agent,
+                count,
+                seed=zlib.crc32(f"{slot.competency}:{len(session.turns)}".encode("utf-8")),
+                industry=session.industry,
             )
         except Exception:
             return []
@@ -276,17 +285,20 @@ class Orchestrator:
             key=lambda c: (c.required_level - c.resume_level, c.weight),
             reverse=True,
         )
+        names = [c.name for c in ranked]
         count = max(3, min(self._config.max_questions, len(ranked) * 2))
-        slots: list[Slot] = []
         cycle = self._config.agent_cycle
+        used: dict[AgentName, set[str]] = {agent: set() for agent in cycle}
+        slots: list[Slot] = []
         for position in range(count):
-            competency = ranked[position % len(ranked)]
             agent = cycle[position % len(cycle)]
+            competency = _next_competency(names, used[agent], cycle.index(agent))
+            used[agent].add(competency)
             slots.append(
                 Slot(
                     agent=agent,
-                    competency=competency.name,
-                    focus=_focus_for(agent, competency.name, position),
+                    competency=competency,
+                    focus=_focus_for(agent, competency, position),
                 )
             )
         return InterviewPlan(slots=slots)
@@ -375,6 +387,19 @@ class Orchestrator:
         }
         session.report_data.update(session.narrative)
         session.phase = Phase.DONE
+
+
+def _next_competency(names: list[str], used: set[str], offset: int) -> str:
+    """给某个面试官挑还没问过的能力；都问过了再按排名轮转。
+
+    能力数少于考题数时（JD 只提炼出 3 个能力），若简单取模，同一位面试官
+    会在两轮里问同一个能力，用户会觉得「技术面试官只会问那一件事」。
+    """
+    ordered = names[offset:] + names[:offset]
+    for name in ordered:
+        if name not in used:
+            return name
+    return ordered[len(used) % len(ordered)]
 
 
 def _focus_for(agent: AgentName, competency: str, position: int) -> str:
