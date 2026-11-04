@@ -22,6 +22,8 @@ def build_messages(
     is_last_slot: bool = False,
     industry: str = "通用",
     bank_questions: Sequence[str] = (),
+    asked_questions: Sequence[str] = (),
+    avoid_questions: Sequence[str] = (),
 ) -> list[dict[str, Any]]:
     """面试官提示：只带最近一轮问答与当前考察点，避免长篇简历反复计费。"""
     system = INTERVIEWER.format(
@@ -34,6 +36,7 @@ def build_messages(
         highlights="；".join(profile.highlights) or "（无）",
         concerns="；".join(profile.concerns) or "（无）",
         bank_hints="\n".join(f"- {text}" for text in bank_questions) or "- （无，自行设计问题）",
+        asked="\n".join(f"- {text}" for text in asked_questions) or "- （暂无）",
     )
     tasks = [
         "本次输出包含两部分：",
@@ -44,6 +47,11 @@ def build_messages(
         tasks.append("这是最后一题，因此 question 必须为 null，并且要给上一个回答打分。")
     else:
         tasks.append("如果不是最后一题，必须给出 question。")
+    if avoid_questions:
+        tasks.append(
+            "刚才的题目重复了，不要输出这类问题："
+            + "；".join(f"「{text}」" for text in avoid_questions)
+        )
 
     history: list[str] = []
     if last_question and last_answer:
@@ -83,6 +91,8 @@ def ask(
     is_last_slot: bool = False,
     industry: str = "通用",
     bank_questions: Sequence[str] = (),
+    asked_questions: Sequence[str] = (),
+    avoid_questions: Sequence[str] = (),
 ) -> TurnDecision:
     decision = client.chat_json(
         build_messages(
@@ -94,6 +104,8 @@ def ask(
             is_last_slot=is_last_slot,
             industry=industry,
             bank_questions=bank_questions,
+            asked_questions=asked_questions,
+            avoid_questions=avoid_questions,
         ),
         TurnDecision,
         temperature=0.7,

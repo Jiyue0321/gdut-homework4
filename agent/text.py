@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Sequence
 
 # 不可见字符：零宽空格、零宽连接符、BOM、方向控制符、软连字符等。
 _INVISIBLE_RE = re.compile(r"[​-‏‪-‮⁠-⁤﻿­]")
@@ -40,6 +41,36 @@ def collapse_repetition(text: str, *, limit: int = _REPEAT_LIMIT) -> str:
         if counts[key] <= limit:
             kept.append(clause)
     return "".join(kept).strip()
+
+
+_ASCII_WORD_RE = re.compile(r"[a-z0-9]+")
+# 二元组重叠度达到该值即视为「换个说法问同一件事」。
+DUPLICATE_THRESHOLD = 0.6
+
+
+def _question_tokens(text: str) -> set[str]:
+    lowered = str(text or "").lower()
+    chars = re.sub(r"[\s\W_]+", "", lowered)
+    grams = {chars[i : i + 2] for i in range(len(chars) - 1)}
+    return grams | set(_ASCII_WORD_RE.findall(lowered))
+
+
+def question_similarity(left: str, right: str) -> float:
+    """按字二元组 + 英文词（P99、800ms）计算重叠度，取值 0-1。
+
+    用重叠度而非 Jaccard：改写过的问题与原文长度不同，但共同片段足以说明
+    在问同一件事；分母取较短一方，避免长问题把分数稀释。
+    """
+    a, b = _question_tokens(left), _question_tokens(right)
+    if not a or not b:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
+
+
+def is_duplicate_question(text: str, asked: list[str] | Sequence[str]) -> bool:
+    return any(
+        question_similarity(text, previous) >= DUPLICATE_THRESHOLD for previous in asked
+    )
 
 
 def clean_lines(items: list[str]) -> list[str]:

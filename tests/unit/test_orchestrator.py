@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from agent.orchestrator import InterviewConfig, InterviewSession, Orchestrator, _friendly_error
-from agent.state import Phase
+from agent.state import AnswerScore, Phase, Turn
 from agent.tools import LocalTools
 from tests.conftest import JD_TEXT, RESUME_TEXT, build_fake_llm
 
@@ -293,6 +293,94 @@ def test_retry_regenerates_missing_question():
 
     session = orchestrator.retry(session)
     assert session.current_question is not None
+
+
+def test_interviewer_prompt_lists_asked_questions():
+    """第二轮出题时，面试官必须能看到自己前面问过什么，否则容易换个说法重复。"""
+    from agent.state import TurnDecision
+
+    llm = build_fake_llm()
+    orchestrator = make_orchestrator(llm)
+    session = orchestrator.start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
+    first_question = session.current_question.text
+    session = orchestrator.answer(session, "我用唯一索引保证幂等，压测 QPS 从 200 提到 900。")
+
+    prompts = [
+        messages[0]["content"]
+        for schema, messages, _ in llm.calls
+        if schema is TurnDecision
+    ]
+    assert any("已经问过的问题" in prompt and first_question in prompt for prompt in prompts)
+
+
+def test_duplicate_question_triggers_one_regeneration():
+    """模型换个说法重复上一题时，编排器要重出一次而不是直接采用。"""
+    from agent.state import TurnDecision
+
+    repeated = "下单接口从 800ms 优化到 120ms，你是怎么定位性能瓶颈的？"
+    fresh = "缓存和数据库不一致时你怎么处理？"
+    llm = build_fake_llm()
+    llm.responses[TurnDecision] = [
+        {"score": None, "question": _question_payload("讲讲你的订单模块"), "is_followup": False},
+        {"score": None, "question": _question_payload(repeated), "is_followup": False},
+        {"score": None, "question": _question_payload(fresh), "is_followup": False},
+    ]
+    session = make_orchestrator(llm).start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
+    session.turns.append(
+        Turn(
+            slot_index=0,
+            agent="hr",
+            question="你说下单接口 P99 从 800ms 降到 120ms，当时是怎么定位瓶颈的？",
+            answer="先看监控再压测。",
+            score=AnswerScore(
+                dimensions={"系统设计": 3}, overall=3, evidence="先看监控再压测", comment="尚可"
+            ),
+        )
+    )
+
+    make_orchestrator(llm)._ask_next_question(session)
+
+    assert session.current_question.text == fresh
+
+
+def test_two_duplicates_fall_back_to_least_similar_question():
+    """两次都被判重复时不能卡死，取重复度较低的一版继续面试。"""
+    from agent.state import TurnDecision
+
+    original = "你说下单接口 P99 从 800ms 降到 120ms，当时是怎么定位瓶颈的？"
+    closer = "接口从800ms降到120ms，你是怎么定位瓶颈的？"
+    looser = "下单接口从 800ms 优化到 120ms，你是怎么定位性能瓶颈的？"
+    llm = build_fake_llm()
+    llm.responses[TurnDecision] = [
+        {"score": None, "question": _question_payload("讲讲你的订单模块"), "is_followup": False},
+        {"score": None, "question": _question_payload(closer), "is_followup": False},
+        {"score": None, "question": _question_payload(looser), "is_followup": False},
+    ]
+    session = make_orchestrator(llm).start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
+    session.turns.append(
+        Turn(
+            slot_index=0,
+            agent="hr",
+            question=original,
+            answer="先看监控再压测。",
+            score=AnswerScore(dimensions={"系统设计": 3}, overall=3, evidence="先看监控", comment="尚可"),
+        )
+    )
+
+    make_orchestrator(llm)._ask_next_question(session)
+
+    assert session.current_question.text == looser
+    assert session.error == ""
+
+
+def _question_payload(text: str) -> dict:
+    return {
+        "text": text,
+        "competency": "系统设计",
+        "rubric": {"criteria": ["a"], "good_looks_like": "b"},
+    }
+
+
 
 
 def test_retry_regenerates_failed_report():

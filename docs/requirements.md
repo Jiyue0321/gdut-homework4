@@ -1,7 +1,7 @@
 # 软件需求规格说明书
 
 **项目名称**：面面俱到 · 模拟面试多智能体
-**文档版本**：V1.7
+**文档版本**：V1.7.1
 **编写日期**：2026-11-04
 **所属课程**：软件工程
 **团队仓库**：https://github.com/Jiyue0321/gdut-homework4
@@ -78,6 +78,7 @@
 | 8 | 2026-11-02 | V1.6 | 上传 PDF / TXT / MD 自动导入简历与 JD（F1 扩充） | 苏炜康 |
 | 9 | 2026-11-03 |      | v1.6 验收测试与缺陷审核报告已交付，待修复 | 何锦烨 |
 | 10 | 2026-11-04 | V1.7 | 依据 v1.6 验收测试报告修复 6 项缺陷：文档特殊字符与编码清洗（BUG-01）、大模型 JSON 容错与截断修复（BUG-02/04）、作答意图过滤（BUG-03）、长任务超时与重试兜底（BUG-05）、报告重复文本抑制（BUG-06）；新增需求 F11、N7、N8 | 苏炜康 |
+| 11 | 2026-11-04 | V1.7.1 | 修复同一亮点被反复出题的问题（BUG-07）：出题提示携带已问清单，并对近似重复的问题自动重出一次；补充 F6 验收标准 5、7 | 苏炜康 |
 | 11 | 2026-11-05 | V2.0 | （待填）答辩前最终定稿 | （待填） |
 
 > **使用说明（交付前请删除本段）**：迭代记录表是「文档不是最后一天赶出来」的证据，
@@ -285,8 +286,11 @@
   2. 计划优先安排缺口最大的能力。
   3. 第一题不产生评分；最后一题不再产生新题。
   4. 每个考察点最多追问 1 次；追问后题号不前进。
-  5. 每轮（打分 + 出题）只调用大模型 1 次。
+  5. 每轮（打分 + 出题）只调用大模型 1 次；仅当新题与已问题重合（二元组重叠度 ≥ 0.6）时，
+     携「已问清单」重出一次，仍重复则取重复度较低的一版继续，不中断面试。
   6. 每轮出题附带当前行业的 2 道参考题（见 F10），题量可配置为 0 关闭。
+  7. 同一面试官在多轮中不重复考察同一能力（BUG-07）；出题前把已问题目清单写入提示词，
+     禁止换个说法重复同一件事。
 
 #### F7 交叉拷问
 
@@ -624,3 +628,4 @@ class TTS(Protocol):
 | N8 | `agent/orchestrator.py:retry`、`app.py`、`ui/report.py` | `tests/unit/test_orchestrator.py`、`tests/integration/test_app_flow.py` |
 | BUG-01 | `mcp_server/document.py:sanitize_text` | `tests/unit/test_document.py` |
 | BUG-06 | `agent/text.py`、`agent/agents/report.py` | `tests/unit/test_text.py` |
+| BUG-07 | `agent/text.py:is_duplicate_question`、`agent/orchestrator.py:_ask_next_question`、`agent/prompts/` | `tests/unit/test_text.py`、`test_orchestrator.py` |

@@ -12,6 +12,7 @@ from typing import Any, Mapping, Protocol, Sequence
 from agent import intent
 from agent.agents import evaluator, interviewers, jd, report, resume
 from agent.mcp_client import ToolError
+from agent.text import DUPLICATE_THRESHOLD, is_duplicate_question, question_similarity
 from agent.state import (
     AGENT_LABELS,
     AgentName,
@@ -197,6 +198,7 @@ class Orchestrator:
                 is_last_slot=last_slot,
                 industry=session.industry,
                 bank_questions=self._bank_hints(session, slot),
+                asked_questions=[turn.question for turn in session.turns],
             )
             score = decision.score or evaluator.evaluate(
                 self._llm, session.current_question, answer_text.strip()
@@ -314,18 +316,39 @@ class Orchestrator:
     def _ask_next_question(self, session: InterviewSession) -> None:
         slot = self._current_slot(session)
         session.current_agent = slot.agent
-        decision = interviewers.ask(
-            self._llm,
-            slot,
-            session.profile,  # type: ignore[arg-type]
-            session.role_title,
-            industry=session.industry,
-            bank_questions=self._bank_hints(session, slot),
-        )
-        if decision.question is None:
-            session.error = "面试官没有给出问题，请重试"
-            return
-        session.current_question = decision.question
+        asked = [turn.question for turn in session.turns]
+        avoid: list[str] = []
+        fallback: tuple[float, Question] | None = None
+        # 首次仍可能换个说法重复，把重复项明确告知后重出一次；再重复则取重复度最低的一版，避免卡住流程。
+        for _ in range(2):
+            decision = interviewers.ask(
+                self._llm,
+                slot,
+                session.profile,  # type: ignore[arg-type]
+                session.role_title,
+                industry=session.industry,
+                bank_questions=self._bank_hints(session, slot),
+                asked_questions=asked,
+                avoid_questions=avoid,
+            )
+            if decision.question is None:
+                session.error = "面试官没有给出问题，请重试"
+                return
+            text = decision.question.text
+            if not is_duplicate_question(text, asked):
+                session.current_question = decision.question
+                return
+            worst = max((question_similarity(text, previous) for previous in asked), default=0.0)
+            if fallback is None or worst < fallback[0]:
+                fallback = (worst, decision.question)
+            # 重复项连同原题一起告知，否则模型只看到自己的问法、不知该避开什么。
+            conflicts = [
+                previous
+                for previous in asked
+                if question_similarity(text, previous) >= DUPLICATE_THRESHOLD
+            ]
+            avoid = [text, *conflicts]
+        session.current_question = fallback[1] if fallback else None
 
     def _should_followup(self, session: InterviewSession, decision: TurnDecision) -> bool:
         if not self._config.allow_followups or session.followup_used:

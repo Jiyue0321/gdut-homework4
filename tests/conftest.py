@@ -57,9 +57,21 @@ def build_fake_llm(questions: int = 20) -> FakeLLM:
     return FakeLLM(responses)
 
 
+TOPICS = [
+    "讲讲你负责的订单模块是怎么防止重复下单的？",
+    "压测时 QPS 从 200 提到 900，具体做了哪些优化？",
+    "缓存和数据库不一致时你怎么处理？",
+    "线上故障你怎么快速定位根因？",
+    "你平时怎么写单元测试保证代码质量？",
+    "接口设计时你怎么做参数校验和错误码约定？",
+    "Redis 缓存击穿和雪崩你分别怎么应对？",
+    "如果让你重新设计这个系统，你会改哪一处？",
+]
+
+
 def _question(index: int) -> dict:
     return {
-        "text": f"第 {index} 个问题：讲讲你的项目",
+        "text": f"第 {index} 个问题：{TOPICS[index % len(TOPICS)]}",
         "competency": "系统设计",
         "rubric": {"criteria": ["讲到背景", "讲到结果"], "good_looks_like": "有量化结果"},
         "followup_hint": "追问一下数据来源",
