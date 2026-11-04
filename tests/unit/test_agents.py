@@ -122,3 +122,44 @@ def default_resume():
         highlights=["接口提速"],
         concerns=["缺数字"],
     )
+
+
+def test_report_writer_suppresses_repetition_and_duplicate_items():
+    from agent.agents import report
+    from agent.state import FinalReport
+
+    loop = "被访问点列表 100ms 的数据量有 30ms 的。" * 5
+    responses = default_responses()
+    responses[FinalReport] = {
+        "overall_score": 3.0,
+        "dimensions": {"系统设计": 3.0},
+        "verdict": "基本达标",
+        "strengths": ["表达有结构", "表达有结构", "   "],
+        "improvements": ["缺少量化"],
+        "action_plan": ["准备三个项目故事"],
+        "sample_answer": loop,
+    }
+    narrative = report.write_report(FakeLLM(responses), {"role_title": "岗位"}, [])
+    assert narrative.strengths == ["表达有结构"]
+    assert narrative.sample_answer.count("被访问点列表") <= 3
+
+
+def test_report_writer_enables_repetition_penalty():
+    from agent.agents import report
+    from agent.state import FinalReport
+
+    responses = default_responses()
+    responses[FinalReport] = {
+        "overall_score": 3.0,
+        "dimensions": {"系统设计": 3.0},
+        "verdict": "基本达标",
+        "strengths": ["表达有结构"],
+        "improvements": ["缺少量化"],
+        "action_plan": ["准备三个项目故事"],
+        "sample_answer": "示范",
+    }
+    fake = FakeLLM(responses)
+    report.write_report(fake, {"role_title": "岗位"}, [])
+    kwargs = next(call[2] for call in fake.calls if call[0] is FinalReport)
+    assert kwargs["frequency_penalty"] > 0
+    assert kwargs["presence_penalty"] > 0

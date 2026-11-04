@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from agent.agents.resume import ChatClient
 from agent.prompts import REPORT_WRITER
 from agent.state import FinalReport
+from agent.text import clean_lines, clean_text, collapse_repetition
 
 
 def build_messages(report_data: Mapping[str, Any], turns: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -42,6 +43,18 @@ def write_report(
     client: ChatClient, report_data: Mapping[str, Any], turns: Sequence[Mapping[str, Any]]
 ) -> FinalReport:
     narrative = client.chat_json(
-        build_messages(report_data, turns), FinalReport, temperature=0.5, max_tokens=1200
+        build_messages(report_data, turns),
+        FinalReport,
+        temperature=0.5,
+        max_tokens=2048,
+        frequency_penalty=0.6,
+        presence_penalty=0.4,
     )
-    return narrative
+    return narrative.model_copy(
+        update={
+            "strengths": clean_lines(narrative.strengths),
+            "improvements": clean_lines(narrative.improvements),
+            "action_plan": clean_lines(narrative.action_plan),
+            "sample_answer": collapse_repetition(clean_text(narrative.sample_answer)),
+        }
+    )
