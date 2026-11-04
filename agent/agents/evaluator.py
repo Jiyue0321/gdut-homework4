@@ -34,7 +34,7 @@ def cross_exam(client: ChatClient, agent: str, question: str, answer: str) -> An
         build_cross_exam_messages(agent, question, answer),
         AnswerScore,
         temperature=0.2,
-        max_tokens=500,
+        max_tokens=1024,
     )
 
 
@@ -54,5 +54,5 @@ def build_messages(question: Question, answer: str) -> list[dict[str, Any]]:
 
 def evaluate(client: ChatClient, question: Question, answer: str) -> AnswerScore:
     return client.chat_json(
-        build_messages(question, answer), AnswerScore, temperature=0.2, max_tokens=500
+        build_messages(question, answer), AnswerScore, temperature=0.2, max_tokens=1024
     )

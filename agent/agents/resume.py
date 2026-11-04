@@ -28,5 +28,5 @@ def analyze_resume(
     client: ChatClient, resume_text: str, quality: dict[str, Any] | None = None
 ) -> ResumeProfile:
     return client.chat_json(
-        build_messages(resume_text, quality), ResumeProfile, temperature=0.2, max_tokens=800
+        build_messages(resume_text, quality), ResumeProfile, temperature=0.2, max_tokens=2048
     )

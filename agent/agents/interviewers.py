@@ -97,7 +97,7 @@ def ask(
         ),
         TurnDecision,
         temperature=0.7,
-        max_tokens=900,
+        max_tokens=2048,
     )
     return _sanitize(decision, has_previous=bool(last_answer), is_last_slot=is_last_slot)
 

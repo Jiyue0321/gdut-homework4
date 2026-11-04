@@ -29,7 +29,7 @@ def analyze_jd(
         build_messages(jd_text, role_title, profile),
         CompetencyModel,
         temperature=0.2,
-        max_tokens=800,
+        max_tokens=2048,
     )
     return _ensure_weights(model)
 
