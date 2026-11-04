@@ -9,6 +9,8 @@ import streamlit as st
 from agent import intent
 from agent.state import AGENT_LABELS, Phase
 
+UPLOAD_MB = 10
+
 SAMPLE_RESUME = """\
 教育背景：广东工业大学 软件工程 本科 2022-2026，GPA 3.6/4.0
 实习经历：某电商公司 后端开发实习 2025.07-2025.09
@@ -55,6 +57,7 @@ def _upload_text(
         type=["pdf", "txt", "md"],
         key=file_key,
         help=help_text,
+        max_upload_size=UPLOAD_MB,
         width="stretch",
     )
     if uploaded is None:
@@ -94,7 +97,7 @@ def setup_form(
                 file_key="resume_pdf",
                 target_key="resume_text",
                 extract=extract,
-                help_text="支持 PDF、TXT、Markdown，最大 10 MB；解析后自动填入下方文本框。",
+                help_text=f"支持 PDF、TXT、Markdown，最大 {UPLOAD_MB} MB；解析后自动填入下方文本框。",
             )
         if st.button("填入示例简历", width='stretch'):
             st.session_state.resume_text = SAMPLE_RESUME
@@ -111,7 +114,7 @@ def setup_form(
                 file_key="jd_pdf",
                 target_key="jd_text",
                 extract=extract,
-                help_text="支持 PDF、TXT、Markdown，最大 10 MB；解析后自动填入下方文本框。",
+                help_text=f"支持 PDF、TXT、Markdown，最大 {UPLOAD_MB} MB；解析后自动填入下方文本框。",
             )
         if st.button("填入示例 JD", width='stretch'):
             st.session_state.jd_text = SAMPLE_JD
