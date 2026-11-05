@@ -56,6 +56,12 @@ def test_detect_industry_falls_back_to_general():
     assert detect_industry("") == "通用"
 
 
+def test_detect_industry_ignores_frontend_collaboration_mentions():
+    # 「与产品、前端协作」「常见 Web 框架」是后端 JD 的常见措辞，不能判成前端。
+    jd = "后端开发实习生\n负责接口设计与性能优化\n熟悉 Python 及常见 Web 框架\n能与产品、前端协作"
+    assert detect_industry(jd) == "互联网后端"
+
+
 def test_pick_questions_respects_count_and_role():
     picks = pick_questions(["系统设计"], "tech", 3, seed=7)
     assert len(picks) == 3

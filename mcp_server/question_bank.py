@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -21,7 +22,7 @@ INDUSTRY_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "互联网前端": (
         "前端", "react", "vue", "javascript", "typescript", "css", "html",
-        "小程序", "web", "浏览器", "移动端",
+        "小程序", "web前端", "web 前端", "浏览器", "移动端",
     ),
     "人工智能": (
         "算法", "机器学习", "深度学习", "大模型", "llm", "nlp", "推荐系统",
@@ -59,9 +60,13 @@ def industry_of(question: Mapping[str, Any]) -> str:
     return str(question.get("industry") or GENERAL_INDUSTRY)
 
 
+# 「与前端协作」「Web 框架」说的是配合关系或通用技术，不能说明岗位本身是前端。
+_COLLAB_RE = re.compile(r"(与|和|同|跟|配合|协同|联调)[^。；\n]{0,4}前端|前端[^。；\n]{0,3}(协作|对接|联调|沟通|配合)")
+
+
 def detect_industry(text: str) -> str:
     """按关键词给 JD 归类；没有命中就返回「通用」。"""
-    lowered = (text or "").lower()
+    lowered = _COLLAB_RE.sub("", (text or "").lower())
     best_name, best_score = GENERAL_INDUSTRY, 0
     for name, keywords in INDUSTRY_KEYWORDS.items():
         score = sum(1 for keyword in keywords if keyword in lowered)

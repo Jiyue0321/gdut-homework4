@@ -21,7 +21,10 @@ def _get_context():
     """配置与依赖只在需要时构造，避免首屏就因缺 Key 报错。"""
     config = load_config()
     if not config.configured:
-        st.error("未配置大模型 API Key。请在 `.env` 或 Streamlit Secrets 中设置 `OPENAI_API_KEY`。")
+        st.error(
+            "未配置大模型 API Key。请在 `.env` 中把 `OPENAI_API_KEY` 换成真实 Key"
+            "（示例文件里的 `sk-你的deepseek密钥` 是占位符），保存后刷新页面。"
+        )
         st.stop()
     try:
         client = LLMClient(config)

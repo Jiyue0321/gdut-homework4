@@ -159,7 +159,8 @@ class MCPTools:
         return self._call("list_industries", {})
 
     def detect_industry(self, jd_text: str) -> str:
-        return self._call("detect_industry", {"jd_text": jd_text})
+        # 该工具返回的是行业名纯文本，不是 JSON。
+        return self._call_text("detect_industry", {"jd_text": jd_text}).strip()
 
     def extract_document(self, filename: str, data: bytes) -> dict[str, Any]:
         return self._call(

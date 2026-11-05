@@ -37,7 +37,12 @@ class LLMConfig:
 
     @property
     def configured(self) -> bool:
-        return bool(self.api_key and self.base_url and self.model)
+        # .env.example 里的占位符含中文；真 Key 只可能是 ASCII 且不含空白。
+        # 放行占位符会让请求在发头时报 'ascii' codec 错误，用户看不懂。
+        key_ok = bool(self.api_key) and self.api_key.isascii() and not any(
+            ch.isspace() for ch in self.api_key
+        )
+        return key_ok and bool(self.base_url and self.model)
 
 
 def _secret(name: str, default: str = "") -> str:
