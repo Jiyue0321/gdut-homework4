@@ -2,6 +2,11 @@
 
 > 粘贴一份简历和一份岗位 JD（或直接上传 PDF），让 HR、技术、压力三位 AI 面试官轮流发难。
 
+**在线体验**：<https://interview-agent-test.streamlit.app>
+
+> 免费实例无访问时会休眠，冷启动约 30–60 秒，期间页面显示「Your app is waking up」，等待即可。
+> 演示或答辩前请提前打开一次预热。
+
 应届生和转行者缺的往往不是题库，而是**有人像真实面试官一样追问到底，并告诉你差在哪里**。
 本项目用多智能体协作复现真实面试：先读简历与岗位，找出能力缺口，再针对缺口定向出题、
 逐层追问、交叉拷问，最后给出一份可执行的复盘报告。
@@ -71,12 +76,23 @@ pytest -m slow      # 需要真实 API Key 的联调测试
 
 ## 部署
 
+线上实例：<https://interview-agent-test.streamlit.app>（Streamlit Community Cloud，从本仓库直接部署）
+
 Streamlit Cloud 直接从 GitHub 部署。密钥写在应用的 Secrets 中：
 
 ```toml
 OPENAI_API_KEY = "sk-..."
 OPENAI_MODEL = "deepseek-chat"
 ```
+
+部署注意事项：
+
+- **冷启动**：免费实例无访问时休眠，唤醒约 30–60 秒。
+- **工具路径**：`agent/tools.py` 提供 `LocalTools`（进程内直调）与 `MCPTools`（stdio 子进程）
+  两套等价实现，用 Secrets 中的 `USE_MCP` 切换。云端若 MCP 子进程受限，设
+  `USE_MCP = "false"` 走进程内直调即可，功能一致。
+- **PDF 字体**：云端若缺中文字体，`mcp_server/pdf_report.py` 会从嵌入字体回退到 CID 字体；
+  上线后请立即导出一份 PDF 确认中文不是方块。
 
 ## 团队
 
