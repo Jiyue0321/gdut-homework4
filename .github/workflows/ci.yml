@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 与本地开发环境和 Streamlit Cloud 保持一致。
+        # 想加 3.11 / 3.12 直接往后追加即可；追加前先在本地确认
+        # requirements.txt 在该版本下能装全（本项目依赖全部为精确 pin）。
+        python-version: ["3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        # 不注入 OPENAI_API_KEY：测试全部使用假模型，不发真实请求。
+        # 默认跳过 slow 标记由 pytest.ini 的 addopts 保证。
+        env:
+          USE_MCP: "false"
+        run: |
+          mkdir -p reports
+          set -o pipefail
+          pytest --cov=agent --cov=mcp_server --cov=ui --cov=app \
+                 --cov-report=term-missing \
+                 --cov-report=xml \
+                 --junitxml=reports/junit.xml 2>&1 | tee reports/pytest.log
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}
+          path: coverage.xml
+          if-no-files-found: warn
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-py${{ matrix.python-version }}
+          path: reports/junit.xml
+          if-no-files-found: warn
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo "### 测试与覆盖率（Python ${{ matrix.python-version }}）"
+            echo '```'
+            tail -40 reports/pytest.log || echo "无日志"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

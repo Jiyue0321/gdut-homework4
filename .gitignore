@@ -27,4 +27,6 @@ Thumbs.db
 # ---- 测试与缓存 ----
 .pytest_cache/
 .coverage
+coverage.xml
+reports/
 htmlcov/
