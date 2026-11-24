@@ -285,7 +285,8 @@ def run_interview(config: LLMConfig, args: argparse.Namespace, record: SmokeReco
     print()
     print(f"阶段 2/3：作答 {args.questions} 题（遇追问照常再答）…")
     step = 0
-    max_steps = args.questions + 4  # 追问不推进题号，留几个余量防止死循环
+    # 每个槽位最多追问 1 次（F6.4），因此最多 2 倍题数的作答轮次；再留 2 步余量。
+    max_steps = args.questions * 2 + 2
     while not session.finished and step < max_steps:
         step += 1
         before_turns = len(session.turns)
@@ -315,10 +316,18 @@ def run_interview(config: LLMConfig, args: argparse.Namespace, record: SmokeReco
             print(f"  [失败] {session.error}")
             return 1
 
+    record.model_calls = len(llm.calls)
+    record.model_seconds_total = sum(c.seconds for c in llm.calls)
     record.turns = len(session.turns)
     if not session.finished:
-        record.errors.append(f"流程未走完：phase={session.phase.value}，已答 {record.turns} 题")
+        record.errors.append(
+            f"流程未走完：phase={session.phase.value}，已答 {record.turns} 轮"
+            f"（{record.followups} 次追问），上限 {max_steps} 步"
+        )
         print(f"[失败] 流程未走完，phase={session.phase.value}")
+        record.checks.append(
+            Check("流程走到 DONE", False, f"phase={session.phase.value}，{record.turns} 轮作答")
+        )
         return 1
 
     print()
@@ -362,6 +371,7 @@ def _collect_checks(
     session: InterviewSession, record: SmokeRecord, args: argparse.Namespace
 ) -> list[Check]:
     """把本次真跑的判定条件集中成一组可复述的断言。"""
+    covered = len({t.slot_index for t in session.turns})  # 追问落在同一槽位，不重复计题
     checks = [
         Check(
             "流程走到 DONE",
@@ -369,9 +379,14 @@ def _collect_checks(
             f"phase={session.phase.value}",
         ),
         Check(
-            f"完成 {args.questions} 题（含追问不计数）",
-            len(session.turns) >= args.questions,
-            f"实际 {len(session.turns)} 轮作答",
+            f"完成 {args.questions} 道不同的题",
+            covered >= args.questions,
+            f"{covered} 个槽位，共 {len(session.turns)} 轮作答",
+        ),
+        Check(
+            "每个槽位最多追问 1 次",
+            record.followups <= covered,
+            f"{record.followups} 次追问 / {covered} 个槽位",
         ),
         Check(
             "首轮分析 ≤20 秒",
