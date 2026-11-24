@@ -28,11 +28,14 @@
 
 ```
 Streamlit 界面（5 步向导）
-  └─ agent/orchestrator.py   确定性状态机：阶段流转、题量上限、评分聚合
-       ├─ agent/agents/*      无状态智能体：简历分析 / 岗位分析 / 面试官 / 评估 / 报告
-       ├─ agent/llm.py        结构化 JSON 输出（OpenAI 兼容接口）       └─ agent/tools.py      ToolProvider ─┬─ LocalTools（进程内直调）
-                                            └─ MCPTools（stdio 子进程）
-                 └─ mcp_server/interview_server.py  确定性工具：缺口匹配、抽题、评分聚合、报告渲染（MD/PDF）
+  └─ agent/orchestrator.py         确定性状态机：阶段流转、题量上限、评分聚合
+       ├─ agent/agents/*            无状态智能体：简历分析 / 岗位分析 / 面试官 / 评估 / 报告
+       ├─ agent/llm.py              结构化 JSON 输出（OpenAI 兼容接口）
+       └─ agent/tools.py            ToolProvider ─┬─ LocalTools（进程内直调）
+                                                  └─ MCPTools（stdio 子进程）
+                                                       └─ mcp_server/interview_server.py
+                                                          确定性工具：缺口匹配、抽题、
+                                                          评分聚合、报告渲染（MD/PDF）
 ```
 
 设计取向：**智能体的自主性用在提问与追问，关键流程由代码保证可复现、可测试。**
@@ -47,7 +50,7 @@ Streamlit 界面（5 步向导）
 | `mcp_server/` | MCP 工具服务、评分函数、题库、路径沙箱 |
 | `ui/` | 页面与组件（雷达图、评分卡、对话记录、报告） |
 | `tests/` | 单元测试与 golden 集成测试 |
-| `docs/` | 需求分析、架构说明、演示脚本、博客素材 |
+| `docs/` | 需求、设计、冲刺复盘、稳定性验证、原型接口约定 |
 | `workspace/` | 导出的面试报告（沙箱目录） |
 
 ## 快速开始
@@ -123,4 +126,13 @@ OPENAI_MODEL = "deepseek-chat"
 
 ## 文档
 
-- [需求分析文档](docs/requirements.md)
+| 文档 | 内容 |
+| --- | --- |
+| [软件需求规格说明书](docs/requirements.md) | F1–F11 功能需求、N1–N8 非功能需求、验收标准与代码对应表 |
+| [Alpha 冲刺复盘](docs/alpha-retrospective.md) | 现状盘点、现存问题、落地方案、冲刺目标、计划 vs 实际 |
+| [成员分工与工作量](docs/alpha-workload.md) | S1–S11 任务的交付物、人天与占比 |
+| [云端稳定性验证记录](docs/stability-check.md) | 冷启动、MCP 路径、PDF 字体、完整流程的实测数据 |
+| [原型后台接口约定](docs/prototype-api.md) | 概览 / 题库 / 配置三页的数据来源与后续实现边界 |
+| [v0.9.0 Release 正文](docs/release-notes-v0.9.0.md) | Alpha 基线版本的发布说明 |
+
+设计说明书（系统设计 34 页、数据库设计 24 页）见 `docs/` 下两份 PDF。
