@@ -1,5 +1,7 @@
 # 面面俱到 · 模拟面试多智能体
 
+[![CI](https://github.com/Jiyue0321/gdut-homework4/actions/workflows/ci.yml/badge.svg)](https://github.com/Jiyue0321/gdut-homework4/actions/workflows/ci.yml)
+
 > 粘贴一份简历和一份岗位 JD（或直接上传 PDF），让 HR、技术、压力三位 AI 面试官轮流发难。
 
 **在线体验**：<https://interview-agent-test.streamlit.app>
@@ -69,9 +71,25 @@ streamlit run app.py
 ## 测试
 
 ```bash
-pytest              # 单元 + golden 集成测试，不调用真实模型
-pytest -m slow      # 需要真实 API Key 的联调测试
+pytest                  # 单元 + golden 集成测试，不调用真实模型
+pytest -m slow          # 需要真实 API Key 的联调测试
+pytest --cov=agent --cov=mcp_server --cov=ui --cov=app --cov-report=term-missing
 ```
+
+当前 **165 passed / 1 deselected**，语句覆盖率 **84%**（`agent` / `mcp_server` / `ui` / `app.py`，
+共 1862 条语句，未覆盖 289 条）。
+
+| 模块 | 覆盖率 | 说明 |
+| --- | --- | --- |
+| `agent/orchestrator.py` | 94% | 状态机主路径与失败分支 |
+| `mcp_server/pdf_report.py` | 95% | 含字体未内嵌时的回退分支 |
+| `mcp_server/toolkit.py` | 94% | 缺口匹配、抽题、评分聚合 |
+| `ui/` | 81–90% | 页面渲染与下载按钮 |
+| `mcp_server/interview_server.py` | 0% | 仅由 `tests/integration/test_mcp_server.py` 以子进程方式调用，`coverage` 不跨进程统计 |
+| `agent/voice.py` | 0% | 只有 Protocol 与 `NotImplementedError` 占位，无逻辑可测 |
+
+CI（`.github/workflows/ci.yml`）在每次 `push` 与 `pull_request` 到 `main` 时自动执行同一套命令，
+完整覆盖率报告作为 Actions 产物提供下载。
 
 ## 部署
 
