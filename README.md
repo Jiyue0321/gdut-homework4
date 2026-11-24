@@ -90,9 +90,10 @@ OPENAI_MODEL = "deepseek-chat"
 - **工具路径**：`agent/tools.py` 提供 `LocalTools`（进程内直调）与 `MCPTools`（stdio 子进程）
   两套等价实现，用 Secrets 中的 `USE_MCP` 切换。云端若 MCP 子进程受限，设
   `USE_MCP = "false"` 走进程内直调即可，功能一致。
-- **PDF 字体**：`packages.txt` 会让云端安装 `fonts-noto-cjk`，`mcp_server/pdf_report.py` 会优先内嵌该字体；
+- **PDF 字体**：中文字体 `assets/fonts/SimHei.ttf` 随仓库分发，`mcp_server/pdf_report.py` 会优先内嵌它；
   都找不到时回退到 reportlab 的 `STSong-Light` CID 字体（此时中文能否显示取决于阅读器）。
-  上线后请导出一份 PDF，**文件大小 90 KB 以上**说明字体已内嵌，几十 KB 则说明走了回退。
+  **判据是文件大小而不是肉眼看中文**：导出的 PDF 若只有十几 KB，说明走了回退（内嵌字体的报告 ≥35 KB）。
+  报告页在未内嵌时会直接提示；`tests/unit/test_pdf_font.py` 也断言了这一点。
 - **模型选择**：`deepseek-chat` 单题约 3 秒；`deepseek-flash` 带推理 token，延迟约翻倍，
   对 N5 的「单题 ≤3 秒」指标有压力，演示与测试建议用 `deepseek-chat`。
 

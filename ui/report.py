@@ -99,8 +99,18 @@ def _render_export(session, tools, base_name: str) -> None:
         mime="application/pdf",
         width="stretch",
     )
+    if not _pdf_font_embedded(pdf):
+        st.caption(
+            "提示：本次 PDF 未内嵌中文字体，部分阅读器可能显示方块。"
+            "可改用 Markdown 版本，或联系部署者检查 `assets/fonts` 是否存在。"
+        )
     with st.expander("在页面上查看完整报告"):
         st.markdown(markdown)
+
+
+def _pdf_font_embedded(pdf: bytes) -> bool:
+    """TrueType 内嵌会在文件里留下 FontFile2 流；只有 CID 回退时才没有。"""
+    return b"/FontFile2" in pdf
 
 
 def render_error(message: str) -> None:

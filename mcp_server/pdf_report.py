@@ -33,8 +33,12 @@ MUTED = colors.HexColor("#5A6472")
 BRAND = colors.HexColor("#2E5EAA")
 LIGHT = colors.HexColor("#E8EEF7")
 
-# 优先嵌入本机中文字体，PDF 换台机器也能正常显示；都没有时退回 reportlab 的 CID 字体。
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# 仓库自带的字体排在最前：云端容器的系统字体目录通常为空，Streamlit Cloud 也不一定
+# 会装 packages.txt 里的系统包，只有随仓库走的字体才保证存在。
 FONT_CANDIDATES = (
+    PROJECT_ROOT / "assets" / "fonts" / "SimHei.ttf",
     "C:/Windows/Fonts/msyh.ttc",
     "C:/Windows/Fonts/simhei.ttf",
     "/System/Library/Fonts/PingFang.ttc",
@@ -44,7 +48,7 @@ FONT_CANDIDATES = (
 
 
 def _register_cjk_font() -> str:
-    candidates = list(FONT_CANDIDATES)
+    candidates: list[Any] = list(FONT_CANDIDATES)
     extra = os.getenv("REPORT_FONT_PATH", "").strip()
     if extra:
         candidates.insert(0, extra)
@@ -52,7 +56,7 @@ def _register_cjk_font() -> str:
         if not Path(path).exists():
             continue
         try:
-            pdfmetrics.registerFont(TTFont(FONT, path, subfontIndex=0))
+            pdfmetrics.registerFont(TTFont(FONT, str(path), subfontIndex=0))
             return FONT
         except Exception:
             continue
@@ -61,6 +65,15 @@ def _register_cjk_font() -> str:
 
 
 FONT_NAME = _register_cjk_font()
+
+
+def embedded_font_in_use() -> bool:
+    """当前 PDF 是否内嵌了 TrueType 字体。
+
+    回退到 ``STSong-Light`` 时字体不随文件走，显示效果取决于阅读器有没有对应中文映射，
+    因此部署后应当用这个值（而不是肉眼看中文）判断字体是否真的带上了。
+    """
+    return FONT_NAME != "STSong-Light"
 
 STYLES = {
     "title": ParagraphStyle("title", fontName=FONT_NAME, fontSize=20, leading=28, textColor=BRAND),
