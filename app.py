@@ -103,7 +103,9 @@ def main() -> None:
             st.rerun()
         return
 
-    answer = interview.interview_body(session)
+    answer = interview.interview_body(
+        session, on_render=orchestrator.prefetch_next_question
+    )
     if answer:
         with st.spinner("面试官正在看你的回答…"):
             session = orchestrator.answer(session, answer)

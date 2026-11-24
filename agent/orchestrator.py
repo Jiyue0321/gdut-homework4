@@ -5,8 +5,9 @@
 
 from __future__ import annotations
 
+import atexit
 import zlib
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -66,6 +67,9 @@ class InterviewSession:
     narrative: dict[str, Any] = field(default_factory=dict)
     followup_used: bool = False
     error: str = ""
+    # 预取的下一题：用户在读题 / 打字期间后台生成，提交回答时直接取用，
+    # 把出题耗时从「点击提交后」挪到「用户作答时」。不参与序列化快照。
+    prefetched: tuple[int, Future] | None = field(default=None, repr=False, compare=False)
 
     @property
     def finished(self) -> bool:
@@ -138,6 +142,9 @@ class Orchestrator:
         self._llm = llm
         self._tools = tools
         self._config = config or InterviewConfig()
+        # 预取线程常驻：用户读题、打字期间在后台跑出题调用，提交时结果已就绪。
+        self._prefetch_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="prefetch")
+        atexit.register(self._prefetch_pool.shutdown, wait=False, cancel_futures=True)
 
     # ---------- 入口 ----------
 
@@ -168,10 +175,58 @@ class Orchestrator:
 
             session.phase = Phase.INTERVIEW
             self._ask_next_question(session)
+            self.prefetch_next_question(session)
         except Exception as exc:  # 面向用户的中文错误
             session.error = _friendly_error(exc)
             session.phase = Phase.IDLE
         return session
+
+    def prefetch_next_question(self, session: InterviewSession) -> None:
+        """在用户阅读/作答当前题时，后台预先生成下一题。
+
+        出题不依赖候选人本轮的作答，因此可以提前算好；提交回答时只需等打分。
+        失败或过期一律静默降级为同步出题，不影响正确性。
+        """
+        if session.plan is None or session.current_question is None:
+            return
+        index = session.slot_index
+        if index + 1 >= len(session.plan.slots):
+            return  # 当前是最后一题，没有下一题可预取
+        pending = session.prefetched
+        if pending is not None and pending[0] == index:
+            return  # 本题的下一题已在预取中
+        if pending is not None:
+            pending[1].cancel()
+        # 这里就把参数全部取成不可变量：预取线程运行时 session 可能已被推进，
+        # 直接读 session.slot_index 会算错槽位。
+        slot = session.plan.slots[index + 1]
+        asked = [turn.question for turn in session.turns]
+        asked = [*asked, session.current_question.text]
+        profile = session.profile
+        role_title = session.role_title
+        industry = session.industry
+        bank = self._bank_hints(session, slot)
+        session.prefetched = (
+            index,
+            self._prefetch_pool.submit(
+                lambda: (slot, self._generate_question(slot, profile, role_title, industry, bank, asked))
+            ),
+        )
+
+    def _take_prefetched(
+        self, session: InterviewSession
+    ) -> tuple[Slot | None, Question | None] | None:
+        """取走与当前槽位匹配的预取结果；已过期或失败则返回 None。"""
+        pending = session.prefetched
+        session.prefetched = None
+        if pending is None or pending[0] != session.slot_index:
+            return None
+        future = pending[1]
+        try:
+            # 用户答得太快时预取可能没跑完，等它仍比重新发一次请求快。
+            return future.result(timeout=60)
+        except Exception:
+            return None
 
     def answer(self, session: InterviewSession, answer_text: str) -> InterviewSession:
         """提交一次回答，推进到下一题或进入下一阶段。"""
@@ -209,6 +264,10 @@ class Orchestrator:
                 )
 
             def question_job() -> tuple[Slot | None, Question | None]:
+                # 预取命中时这一步几乎不花时间：用户读题打字的工夫已经算好了。
+                prefetched = self._take_prefetched(session)
+                if prefetched is not None:
+                    return prefetched
                 # 并行出题早于本轮 Turn 落库，必须手动带上刚答完的这道题，
                 # 否则出题模型看不到它，很容易换个说法再问一遍。
                 current = session.current_question
@@ -243,6 +302,7 @@ class Orchestrator:
             if self._should_followup(session, decision):
                 session.followup_used = True
                 session.current_question = _followup_question(session.current_question, decision)
+                self.prefetch_next_question(session)
                 return session
 
             session.followup_used = False
@@ -253,6 +313,7 @@ class Orchestrator:
                 self._apply_question(session, plan)
             else:
                 self._ask_next_question(session)
+            self.prefetch_next_question(session)
         except Exception as exc:
             session.error = _friendly_error(exc)
         return session
@@ -343,20 +404,34 @@ class Orchestrator:
     def _ask_next_question(self, session: InterviewSession) -> None:
         slot = self._current_slot(session)
         asked = [turn.question for turn in session.turns]
-        question = self._generate_question(session, slot, asked)
+        question = self._generate_question(
+            slot,
+            session.profile,  # type: ignore[arg-type]
+            session.role_title,
+            session.industry,
+            self._bank_hints(session, slot),
+            asked,
+        )
         session.current_agent = slot.agent
         session.current_question = question
         if question is None:
             session.error = "面试官没有给出问题，请重试"
 
     def _generate_question(
-        self, session: InterviewSession, slot: Slot, asked: list[str]
+        self,
+        slot: Slot,
+        profile: ResumeProfile | None,
+        role_title: str,
+        industry: str,
+        bank: list[str],
+        asked: list[str],
     ) -> Question | None:
-        """出题并做一次去重重试；不修改 session，可安全地在工作线程里调用。"""
-        profile = session.profile
+        """出题并做一次去重重试。
+
+        参数全部是值，不读 session：预取线程运行期间 session 可能已被推进。
+        """
         if profile is None:
             return None
-        bank = self._bank_hints(session, slot)
         avoid: list[str] = []
         fallback: tuple[float, Question] | None = None
         # 首次仍可能换个说法重复，把重复项明确告知后重出一次；再重复则取重复度最低的一版，避免卡住流程。
@@ -365,8 +440,8 @@ class Orchestrator:
                 self._llm,
                 slot,
                 profile,
-                session.role_title,
-                industry=session.industry,
+                role_title,
+                industry=industry,
                 bank_questions=bank,
                 asked_questions=asked,
                 avoid_questions=avoid,
@@ -391,13 +466,20 @@ class Orchestrator:
     def _plan_next_question(
         self, session: InterviewSession, asked: list[str]
     ) -> tuple[Slot | None, Question | None]:
-        """提前为下一个槽位出题，与打分并行执行。"""
+        """为下一个槽位现场出题（预取未命中时的兜底路径）。"""
         assert session.plan is not None
         next_index = session.slot_index + 1
         if next_index >= len(session.plan.slots):
             return None, None
         slot = session.plan.slots[next_index]
-        return slot, self._generate_question(session, slot, asked)
+        return slot, self._generate_question(
+            slot,
+            session.profile,
+            session.role_title,
+            session.industry,
+            self._bank_hints(session, slot),
+            asked,
+        )
 
     def _apply_question(self, session: InterviewSession, plan: tuple[Slot | None, Question | None]) -> None:
         slot, question = plan

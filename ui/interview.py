@@ -218,8 +218,12 @@ def render_transcript(session) -> None:
                 st.markdown(f"- 评语：{pair['comment']}")
 
 
-def interview_body(session) -> str | None:
-    """面试进行中的主体界面。返回本轮提交的回答（若有）。"""
+def interview_body(session, on_render=None) -> str | None:
+    """面试进行中的主体界面。返回本轮提交的回答（若有）。
+
+    ``on_render`` 在用户开始作答前触发，用来预热下一题（出题不依赖本轮回答，
+    因此可以在用户读题、打字的这段时间里先算好）。
+    """
     progress(session)
     render_transcript(session)
 
@@ -233,6 +237,9 @@ def interview_body(session) -> str | None:
         if session.error:
             st.error(session.error)
         return None
+
+    if on_render is not None:
+        on_render(session)
 
     label = agent_badge(session.current_agent)
     suffix = "（追问）" if session.followup_used else ""
