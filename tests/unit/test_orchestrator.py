@@ -112,9 +112,9 @@ def test_report_data_carries_industry():
 
 
 def _interviewer_prompt(llm) -> str:
-    from agent.state import TurnDecision
+    from agent.state import Question
 
-    call = next(call for call in llm.calls if call[0] is TurnDecision)
+    call = next(call for call in llm.calls if call[0] is Question)
     return call[1][0]["content"]
 
 
@@ -270,19 +270,19 @@ def test_system_feedback_does_not_advance_interview():
 
 def test_retry_regenerates_missing_question():
     class FlakyLLM:
-        """第一次出题返回空问题，重试时恢复正常。"""
+        """第一次出题返回空问题（None），重试时恢复正常。"""
 
         def __init__(self) -> None:
             self._inner = build_fake_llm()
             self._calls = 0
 
         def chat_json(self, messages, schema, **kwargs):
-            from agent.state import TurnDecision
+            from agent.state import Question
 
-            if schema is TurnDecision:
+            if schema is Question:
                 self._calls += 1
-                if self._calls == 1:
-                    return TurnDecision(score=None, question=None, is_followup=False)
+                if self._calls <= 2:  # 首次出题会重试一次，两轮都失败才落到 None
+                    return None
             return self._inner.chat_json(messages, schema, **kwargs)
 
     llm = FlakyLLM()
@@ -297,7 +297,7 @@ def test_retry_regenerates_missing_question():
 
 def test_interviewer_prompt_lists_asked_questions():
     """第二轮出题时，面试官必须能看到自己前面问过什么，否则容易换个说法重复。"""
-    from agent.state import TurnDecision
+    from agent.state import Question
 
     llm = build_fake_llm()
     orchestrator = make_orchestrator(llm)
@@ -308,22 +308,22 @@ def test_interviewer_prompt_lists_asked_questions():
     prompts = [
         messages[0]["content"]
         for schema, messages, _ in llm.calls
-        if schema is TurnDecision
+        if schema is Question
     ]
     assert any("已经问过的问题" in prompt and first_question in prompt for prompt in prompts)
 
 
 def test_duplicate_question_triggers_one_regeneration():
     """模型换个说法重复上一题时，编排器要重出一次而不是直接采用。"""
-    from agent.state import TurnDecision
+    from agent.state import Question
 
     repeated = "下单接口从 800ms 优化到 120ms，你是怎么定位性能瓶颈的？"
     fresh = "缓存和数据库不一致时你怎么处理？"
     llm = build_fake_llm()
-    llm.responses[TurnDecision] = [
-        {"score": None, "question": _question_payload("讲讲你的订单模块"), "is_followup": False},
-        {"score": None, "question": _question_payload(repeated), "is_followup": False},
-        {"score": None, "question": _question_payload(fresh), "is_followup": False},
+    llm.responses[Question] = [
+        _question_payload("讲讲你的订单模块"),
+        _question_payload(repeated),
+        _question_payload(fresh),
     ]
     session = make_orchestrator(llm).start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
     session.turns.append(
@@ -345,16 +345,16 @@ def test_duplicate_question_triggers_one_regeneration():
 
 def test_two_duplicates_fall_back_to_least_similar_question():
     """两次都被判重复时不能卡死，取重复度较低的一版继续面试。"""
-    from agent.state import TurnDecision
+    from agent.state import Question
 
     original = "你说下单接口 P99 从 800ms 降到 120ms，当时是怎么定位瓶颈的？"
     closer = "接口从800ms降到120ms，你是怎么定位瓶颈的？"
     looser = "下单接口从 800ms 优化到 120ms，你是怎么定位性能瓶颈的？"
     llm = build_fake_llm()
-    llm.responses[TurnDecision] = [
-        {"score": None, "question": _question_payload("讲讲你的订单模块"), "is_followup": False},
-        {"score": None, "question": _question_payload(closer), "is_followup": False},
-        {"score": None, "question": _question_payload(looser), "is_followup": False},
+    llm.responses[Question] = [
+        _question_payload("讲讲你的订单模块"),
+        _question_payload(closer),
+        _question_payload(looser),
     ]
     session = make_orchestrator(llm).start(RESUME_TEXT, JD_TEXT, "后端开发实习生")
     session.turns.append(

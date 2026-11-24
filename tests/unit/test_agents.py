@@ -112,6 +112,64 @@ def test_interviewer_uses_generation_temperature():
     assert fake.calls[0][2]["temperature"] == 0.7
 
 
+def test_question_call_is_lean_and_uses_generation_temperature():
+    """出题单独调用：只要 900 token 预算，且不带评分字段。"""
+    fake = FakeLLM()
+    slot = Slot(agent="tech", competency="系统设计", focus="订单")
+    question = interviewers.next_question(fake, slot, default_resume(), "后端开发")
+    schema, messages, kwargs = fake.calls[0]
+    assert schema is Question
+    assert kwargs["temperature"] == 0.7
+    assert kwargs["max_tokens"] == interviewers.QUESTION_MAX_TOKENS
+    assert "不要输出评分" in messages[0]["content"]
+    assert question.text.startswith("讲讲你订单模块")
+
+
+def test_score_call_carries_rubric_and_low_temperature():
+    """打分单独调用：带上本题评分要点，温度低以稳定分数。"""
+    fake = FakeLLM()
+    slot = Slot(agent="tech", competency="系统设计", focus="订单")
+    decision = interviewers.score(
+        fake,
+        slot,
+        default_resume(),
+        "后端开发",
+        last_question="讲讲你订单模块怎么防止重复下单？",
+        last_answer="用唯一索引保证幂等。",
+        rubric=["讲到幂等键", "讲到并发场景"],
+    )
+    schema, messages, kwargs = fake.calls[0]
+    assert schema is TurnDecision
+    assert kwargs["temperature"] == 0.2
+    assert kwargs["max_tokens"] == interviewers.SCORE_MAX_TOKENS
+    assert "讲到幂等键" in messages[1]["content"]
+    assert decision.score.overall == 3
+
+
+def test_score_call_drops_question_when_not_followup():
+    """模型在无需追问时硬塞一道题，必须丢弃，否则会顶掉下一槽位的题。"""
+    responses = default_responses()
+    responses[TurnDecision] = {
+        "score": {"dimensions": {"系统设计": 3}, "overall": 3, "evidence": "e", "comment": "c"},
+        "question": {
+            "text": "多余的题",
+            "competency": "系统设计",
+            "rubric": {"criteria": ["a"], "good_looks_like": "b"},
+        },
+        "is_followup": False,
+    }
+    decision = interviewers.score(
+        FakeLLM(responses),
+        Slot(agent="tech", competency="系统设计", focus="订单"),
+        default_resume(),
+        "后端开发",
+        last_question="问",
+        last_answer="答",
+    )
+    assert decision.question is None
+    assert decision.score.overall == 3
+
+
 def default_resume():
     from agent.state import ResumeProfile
 

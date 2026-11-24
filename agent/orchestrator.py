@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import zlib
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -188,18 +189,42 @@ class Orchestrator:
         try:
             slot = self._current_slot(session)
             last_slot = self._is_last_slot(session)
-            decision = interviewers.ask(
-                self._llm,
-                slot,
-                session.profile,  # type: ignore[arg-type]
-                session.role_title,
-                last_question=session.current_question.text,
-                last_answer=answer_text.strip(),
-                is_last_slot=last_slot,
-                industry=session.industry,
-                bank_questions=self._bank_hints(session, slot),
-                asked_questions=[turn.question for turn in session.turns],
-            )
+            bank = self._bank_hints(session, slot)
+            asked = [turn.question for turn in session.turns]
+
+            def score_job() -> TurnDecision:
+                current = session.current_question
+                assert current is not None  # answer() 入口已校验
+                return interviewers.score(
+                    self._llm,
+                    slot,
+                    session.profile,  # type: ignore[arg-type]
+                    session.role_title,
+                    last_question=current.text,
+                    last_answer=answer_text.strip(),
+                    rubric=current.rubric.criteria,
+                    industry=session.industry,
+                    bank_questions=bank,
+                    asked_questions=asked,
+                )
+
+            def question_job() -> tuple[Slot | None, Question | None]:
+                # 并行出题早于本轮 Turn 落库，必须手动带上刚答完的这道题，
+                # 否则出题模型看不到它，很容易换个说法再问一遍。
+                current = session.current_question
+                assert current is not None
+                return self._plan_next_question(session, [*asked, current.text])
+
+            # 打分与出题互不依赖，并行发起：单题耗时从「两次串行」降到「较慢的那次」。
+            if last_slot:
+                decision = score_job()
+                plan = None
+            else:
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    score_future = pool.submit(score_job)
+                    plan_future = pool.submit(question_job)
+                    decision = score_future.result()
+                    plan = plan_future.result()
             score = decision.score or evaluator.evaluate(
                 self._llm, session.current_question, answer_text.strip()
             )
@@ -224,6 +249,8 @@ class Orchestrator:
             session.slot_index += 1
             if session.slot_index >= len(session.plan.slots):  # type: ignore[union-attr]
                 self._finish(session)
+            elif plan is not None:
+                self._apply_question(session, plan)
             else:
                 self._ask_next_question(session)
         except Exception as exc:
@@ -315,32 +342,43 @@ class Orchestrator:
 
     def _ask_next_question(self, session: InterviewSession) -> None:
         slot = self._current_slot(session)
-        session.current_agent = slot.agent
         asked = [turn.question for turn in session.turns]
+        question = self._generate_question(session, slot, asked)
+        session.current_agent = slot.agent
+        session.current_question = question
+        if question is None:
+            session.error = "面试官没有给出问题，请重试"
+
+    def _generate_question(
+        self, session: InterviewSession, slot: Slot, asked: list[str]
+    ) -> Question | None:
+        """出题并做一次去重重试；不修改 session，可安全地在工作线程里调用。"""
+        profile = session.profile
+        if profile is None:
+            return None
+        bank = self._bank_hints(session, slot)
         avoid: list[str] = []
         fallback: tuple[float, Question] | None = None
         # 首次仍可能换个说法重复，把重复项明确告知后重出一次；再重复则取重复度最低的一版，避免卡住流程。
         for _ in range(2):
-            decision = interviewers.ask(
+            text_question = interviewers.next_question(
                 self._llm,
                 slot,
-                session.profile,  # type: ignore[arg-type]
+                profile,
                 session.role_title,
                 industry=session.industry,
-                bank_questions=self._bank_hints(session, slot),
+                bank_questions=bank,
                 asked_questions=asked,
                 avoid_questions=avoid,
             )
-            if decision.question is None:
-                session.error = "面试官没有给出问题，请重试"
-                return
-            text = decision.question.text
+            if text_question is None:  # 模型没给出题：当次作废，重试一次
+                continue
+            text = text_question.text
             if not is_duplicate_question(text, asked):
-                session.current_question = decision.question
-                return
+                return text_question
             worst = max((question_similarity(text, previous) for previous in asked), default=0.0)
             if fallback is None or worst < fallback[0]:
-                fallback = (worst, decision.question)
+                fallback = (worst, text_question)
             # 重复项连同原题一起告知，否则模型只看到自己的问法、不知该避开什么。
             conflicts = [
                 previous
@@ -348,7 +386,28 @@ class Orchestrator:
                 if question_similarity(text, previous) >= DUPLICATE_THRESHOLD
             ]
             avoid = [text, *conflicts]
-        session.current_question = fallback[1] if fallback else None
+        return fallback[1] if fallback else None
+
+    def _plan_next_question(
+        self, session: InterviewSession, asked: list[str]
+    ) -> tuple[Slot | None, Question | None]:
+        """提前为下一个槽位出题，与打分并行执行。"""
+        assert session.plan is not None
+        next_index = session.slot_index + 1
+        if next_index >= len(session.plan.slots):
+            return None, None
+        slot = session.plan.slots[next_index]
+        return slot, self._generate_question(session, slot, asked)
+
+    def _apply_question(self, session: InterviewSession, plan: tuple[Slot | None, Question | None]) -> None:
+        slot, question = plan
+        if slot is None:
+            return
+        session.current_agent = slot.agent
+        session.current_question = question
+        if question is None:
+            # 提前出题失败不阻断流程：退回同步出题一次，仍失败才报错给用户。
+            self._ask_next_question(session)
 
     def _should_followup(self, session: InterviewSession, decision: TurnDecision) -> bool:
         if not self._config.allow_followups or session.followup_used:

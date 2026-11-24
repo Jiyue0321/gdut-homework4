@@ -33,18 +33,16 @@ JD_TEXT = """\
 
 
 def build_fake_llm(questions: int = 20) -> FakeLLM:
-    """每个 slot 至少一次调用；追问与交叉拷问都复用同一份问答模板。"""
-    from agent.state import TurnDecision
+    """出题与打分分成两次调用：Question 按顺序取题，TurnDecision 只给分。"""
+    from agent.state import Question, TurnDecision
 
     responses = default_responses()
-    responses[TurnDecision] = [{"score": None, "question": _question(0), "is_followup": False}] + [
-        {
-            "score": {"dimensions": {"系统设计": 3}, "overall": 3, "evidence": "原文", "comment": "尚可"},
-            "question": _question(i + 1),
-            "is_followup": False,
-        }
-        for i in range(questions)
-    ]
+    responses[Question] = [_question(i) for i in range(questions)]
+    responses[TurnDecision] = {
+        "score": {"dimensions": {"系统设计": 3}, "overall": 3, "evidence": "原文", "comment": "尚可"},
+        "question": None,
+        "is_followup": False,
+    }
     responses[FinalReport] = {
         "overall_score": 3.0,
         "dimensions": {"系统设计": 3.0},

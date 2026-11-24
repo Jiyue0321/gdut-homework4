@@ -28,8 +28,7 @@
 Streamlit 界面（5 步向导）
   └─ agent/orchestrator.py   确定性状态机：阶段流转、题量上限、评分聚合
        ├─ agent/agents/*      无状态智能体：简历分析 / 岗位分析 / 面试官 / 评估 / 报告
-       ├─ agent/llm.py        结构化 JSON 输出（OpenAI 兼容接口）
-       └─ agent/tools.py      ToolProvider ─┬─ LocalTools（进程内直调）
+       ├─ agent/llm.py        结构化 JSON 输出（OpenAI 兼容接口）       └─ agent/tools.py      ToolProvider ─┬─ LocalTools（进程内直调）
                                             └─ MCPTools（stdio 子进程）
                  └─ mcp_server/interview_server.py  确定性工具：缺口匹配、抽题、评分聚合、报告渲染（MD/PDF）
 ```
@@ -91,8 +90,11 @@ OPENAI_MODEL = "deepseek-chat"
 - **工具路径**：`agent/tools.py` 提供 `LocalTools`（进程内直调）与 `MCPTools`（stdio 子进程）
   两套等价实现，用 Secrets 中的 `USE_MCP` 切换。云端若 MCP 子进程受限，设
   `USE_MCP = "false"` 走进程内直调即可，功能一致。
-- **PDF 字体**：云端若缺中文字体，`mcp_server/pdf_report.py` 会从嵌入字体回退到 CID 字体；
-  上线后请立即导出一份 PDF 确认中文不是方块。
+- **PDF 字体**：`packages.txt` 会让云端安装 `fonts-noto-cjk`，`mcp_server/pdf_report.py` 会优先内嵌该字体；
+  都找不到时回退到 reportlab 的 `STSong-Light` CID 字体（此时中文能否显示取决于阅读器）。
+  上线后请导出一份 PDF，**文件大小 90 KB 以上**说明字体已内嵌，几十 KB 则说明走了回退。
+- **模型选择**：`deepseek-chat` 单题约 3 秒；`deepseek-flash` 带推理 token，延迟约翻倍，
+  对 N5 的「单题 ≤3 秒」指标有压力，演示与测试建议用 `deepseek-chat`。
 
 ## 团队
 

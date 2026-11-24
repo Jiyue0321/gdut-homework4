@@ -176,7 +176,7 @@
 | **API Key** | — | `load_config().api_key` | 🚫 **页面绝不回显**。只显示「已配置 / 未配置」+ 掩码 `sk-****abcd`，来源 `config.configured` |
 | 温度 | `temperature` | **硬编码**在 `agent/llm.py:chat_json(temperature=0.2)` 调用点 | 🆕 需下沉到 `LLMConfig` 才能展示 |
 | 最大 Token | `max_tokens` | 同上，默认 `2048` | 🆕 同上 |
-| Prompt 模板列表 | 6 个常量 | `agent/prompts/__init__.py`：`RESUME_ANALYST` / `JD_ANALYST` / `INTERVIEWER` / `CROSS_EXAM` / `EVALUATOR` / `REPORT_WRITER` | ✅ 可读出，🚫 编辑需落盘 → V2.2 |
+| Prompt 模板列表 | 8 个常量 | `agent/prompts/__init__.py`：`RESUME_ANALYST` / `JD_ANALYST` / `INTERVIEWER_CONTEXT` / `INTERVIEWER_SCORE_RULES` / `INTERVIEWER_QUESTION_RULES` / `CROSS_EXAM` / `EVALUATOR` / `REPORT_WRITER` | ✅ 可读出，🚫 编辑需落盘 → V2.2 |
 | 行业配置 | 8 个行业关键词组 | `mcp_server/question_bank.py:INDUSTRY_KEYWORDS`（另有「通用」） | ✅ 可读出，🚫 编辑 → V2.2 |
 | 修改密码 | — | **系统没有用户体系**，不存在密码 | 🚫 原型里的这个入口 Beta 前删掉或置灰 |
 

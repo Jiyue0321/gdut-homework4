@@ -67,8 +67,9 @@ def default_responses() -> dict[type, Any]:
                 {"name": "沟通表达", "weight": 1, "required_level": 3, "resume_level": 3},
             ],
         },
-        TurnDecision: [{"score": None, "question": question, "is_followup": False}]
-        + [{"score": score, "question": question, "is_followup": False}],
+        # 出题与打分是两次独立调用：出题要 Question，打分要 TurnDecision。
+        Question: question,
+        TurnDecision: {"score": score, "question": None, "is_followup": False},
         AnswerScore: score,
     }
 
