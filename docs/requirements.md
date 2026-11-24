@@ -1,8 +1,8 @@
 # 软件需求规格说明书
 
 **项目名称**：面面俱到 · 模拟面试多智能体
-**文档版本**：V1.7.1
-**编写日期**：2026-11-04
+**文档版本**：V1.8
+**编写日期**：2026-11-04　**最近更新**：2026-11-24
 **所属课程**：软件工程
 **团队仓库**：https://github.com/Jiyue0321/gdut-homework4
 
@@ -79,10 +79,7 @@
 | 9 | 2026-11-03 |      | v1.6 验收测试与缺陷审核报告已交付，待修复 | 何锦烨 |
 | 10 | 2026-11-04 | V1.7 | 依据 v1.6 验收测试报告修复 6 项缺陷：文档特殊字符与编码清洗（BUG-01）、大模型 JSON 容错与截断修复（BUG-02/04）、作答意图过滤（BUG-03）、长任务超时与重试兜底（BUG-05）、报告重复文本抑制（BUG-06）；新增需求 F11、N7、N8 | 苏炜康 |
 | 11 | 2026-11-04 | V1.7.1 | 修复同一亮点被反复出题的问题（BUG-07）：出题提示携带已问清单，并对近似重复的问题自动重出一次；补充 F6 验收标准 5、7 | 苏炜康 |
-| 11 | 2026-11-05 | V2.0 | （待填）答辩前最终定稿 | （待填） |
-
-> **使用说明（交付前请删除本段）**：迭代记录表是「文档不是最后一天赶出来」的证据，
-> 请每完成一次真实修改就补一行，并如实填写日期与修改人。不要为了好看编造迭代次数。
+| 12 | 2026-11-24 | V1.8 | Alpha 冲刺：接入 CI 与覆盖率（S3）；补充 N5 性能实测数据与未达标说明；文档版本号、日期与代码现状对齐 | 苏炜康 |
 
 ---
 
@@ -383,7 +380,9 @@
 - 单元测试覆盖评分聚合、题库抽题与行业识别、工具函数、状态机与提示构建；
 - 集成测试用脚本化假模型跑完整面试，并使用 golden 快照校验报告格式；
 - 界面流程使用 Streamlit `AppTest` 端到端验证。
-- **验收**：`pytest` 全绿，slow 用例默认跳过；PDF 导出测试断言文件头为 `%PDF-` 且以 `%%EOF` 结尾。
+- **验收**：`pytest` 全绿，slow 用例默认跳过；PDF 导出测试断言文件头为 `%PDF-` 且以 `%%EOF` 结尾；
+  `push` 与 `pull_request` 到 `main` 时由 GitHub Actions 自动执行同一套测试
+  （`.github/workflows/ci.yml`），覆盖率不低于基线 84%。
 
 #### N5 性能
 
@@ -541,8 +540,10 @@ class TTS(Protocol):
 > 源文件：`docs/diagrams/04a-class-orchestration.mmd`
 >
 > 读图要点：`Orchestrator` 依赖两个抽象——`ChatProvider`（大模型）与 `ToolProvider`（确定性工具），
-> 因此换模型或换 MCP/本地工具都不影响编排逻辑；五个智能体用虚线（依赖）连向编排器，
-> 表示它们是被调用的无状态函数，彼此不通信。
+> 因此换模型或换 MCP/本地工具都不影响编排逻辑；五个智能体
+> （`ResumeAnalyst` / `JDAnalyst` / `InterviewerAgent` / `Evaluator` / `ReportWriter`）
+> 用虚线（依赖）连向编排器，表示它们是被调用的无状态函数，彼此不通信。
+> 其中 `InterviewerAgent` 用同一个类承载 HR、技术、压力三种角色，角色差异由构造参数与提示词决定。
 
 #### 8.1.2 数据模型
 
@@ -630,6 +631,7 @@ class TTS(Protocol):
 | F11 | `agent/intent.py`、`agent/orchestrator.py:answer`、`ui/interview.py` | `tests/unit/test_intent.py` |
 | N1 | `agent/config.py` | `tests/integration/test_app_flow.py` |
 | N2 | `agent/tools.py` | `tests/integration/test_mcp_server.py` |
+| N4 | `tests/`（165 个用例）+ `.github/workflows/ci.yml` | 全部测试即本需求的验收；CI 每次 push 自动执行 |
 | N6 | `mcp_server/sandbox.py` | `tests/unit/test_toolkit.py` |
 | N7 | `agent/llm.py`、`agent/prompts/` | `tests/unit/test_llm_parse.py` |
 | N8 | `agent/orchestrator.py:retry`、`app.py`、`ui/report.py` | `tests/unit/test_orchestrator.py`、`tests/integration/test_app_flow.py` |
