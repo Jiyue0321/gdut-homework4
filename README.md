@@ -50,6 +50,7 @@ Streamlit 界面（5 步向导）
 | `mcp_server/` | MCP 工具服务、评分函数、题库、路径沙箱 |
 | `ui/` | 页面与组件（雷达图、评分卡、对话记录、报告） |
 | `tests/` | 单元测试与 golden 集成测试 |
+| `scripts/` | 真实模型冒烟脚本 `smoke_real_llm.py`（默认 dry-run） |
 | `docs/` | 需求、设计、冲刺复盘、稳定性验证、原型接口约定 |
 | `workspace/` | 导出的面试报告（沙箱目录） |
 
@@ -77,9 +78,11 @@ streamlit run app.py
 pytest                  # 单元 + golden 集成测试，不调用真实模型
 pytest -m slow          # 需要真实 API Key 的联调测试
 pytest --cov=agent --cov=mcp_server --cov=ui --cov=app --cov-report=term-missing
+python scripts/smoke_real_llm.py          # 真实模型冒烟：默认 dry-run，只检查配置与工具链
+python scripts/smoke_real_llm.py --run    # 真跑完整 6 题，会消耗 API 额度
 ```
 
-当前 **165 passed / 1 deselected**，语句覆盖率 **84%**（`agent` / `mcp_server` / `ui` / `app.py`，
+当前 **173 passed / 1 deselected**，语句覆盖率 **84%**（`agent` / `mcp_server` / `ui` / `app.py`，
 共 1862 条语句，未覆盖 289 条）。
 
 | 模块 | 覆盖率 | 说明 |
@@ -132,6 +135,7 @@ OPENAI_MODEL = "deepseek-chat"
 | [Alpha 冲刺复盘](docs/alpha-retrospective.md) | 现状盘点、现存问题、落地方案、冲刺目标、计划 vs 实际 |
 | [成员分工与工作量](docs/alpha-workload.md) | S1–S11 任务的交付物、人天与占比 |
 | [云端稳定性验证记录](docs/stability-check.md) | 冷启动、MCP 路径、PDF 字体、完整流程的实测数据 |
+| [真实模型冒烟回归记录](docs/smoke-real-llm.md) | 真 DeepSeek 跑完整链路的脚本、判定条件与实测记录 |
 | [原型后台接口约定](docs/prototype-api.md) | 概览 / 题库 / 配置三页的数据来源与后续实现边界 |
 | [v0.9.0 Release 正文](docs/release-notes-v0.9.0.md) | Alpha 基线版本的发布说明 |
 

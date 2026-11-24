@@ -77,12 +77,13 @@ Alpha 冲刺期间修掉的问题，按影响排序：
 ## 质量
 
 ```
-165 passed, 1 deselected in 9.07s
+173 passed, 1 deselected in 9.45s
 ```
 
 - 单元测试覆盖编排器、评分、题库、文档抽取、意图过滤、JSON 容错、PDF 字体内嵌
 - golden 集成测试跑完整 6 题流程（假模型，不消耗 API 额度）
 - `AppTest` 端到端测试覆盖界面流程
+- 真实模型冒烟脚本 `scripts/smoke_real_llm.py`（默认 dry-run，显式 `--run` 才消耗额度）
 - 约 3.7k 行源码 / 2.2k 行测试
 - 语句覆盖率 **84%**（1862 条语句，未覆盖 289 条）
 

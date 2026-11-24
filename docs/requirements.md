@@ -631,7 +631,7 @@ class TTS(Protocol):
 | F11 | `agent/intent.py`、`agent/orchestrator.py:answer`、`ui/interview.py` | `tests/unit/test_intent.py` |
 | N1 | `agent/config.py` | `tests/integration/test_app_flow.py` |
 | N2 | `agent/tools.py` | `tests/integration/test_mcp_server.py` |
-| N4 | `tests/`（165 个用例）+ `.github/workflows/ci.yml` | 全部测试即本需求的验收；CI 每次 push 自动执行 |
+| N4 | `tests/`（173 个用例）+ `.github/workflows/ci.yml` | 全部测试即本需求的验收；CI 每次 push 自动执行 |
 | N6 | `mcp_server/sandbox.py` | `tests/unit/test_toolkit.py` |
 | N7 | `agent/llm.py`、`agent/prompts/` | `tests/unit/test_llm_parse.py` |
 | N8 | `agent/orchestrator.py:retry`、`app.py`、`ui/report.py` | `tests/unit/test_orchestrator.py`、`tests/integration/test_app_flow.py` |
