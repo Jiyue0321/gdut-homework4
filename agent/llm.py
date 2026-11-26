@@ -15,6 +15,12 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 JSON_ONLY_RULE = "\n\n只输出一个 JSON 对象，不要 markdown 代码块，不要任何解释文字。"
 
+# 生成参数集中在这里，便于后台配置页只读展示；改这里等于改全部调用点。
+DEFAULT_TEMPERATURE = 0.2
+DEFAULT_MAX_TOKENS = 2048
+DEFAULT_FREQUENCY_PENALTY = 0.2
+DEFAULT_PRESENCE_PENALTY = 0.1
+
 # 模型偶尔会带着"好的，以下是评分……"这类前缀，或把 JSON 包在代码块里。
 _FENCE_RE = re.compile(r"```(?:json|JSON)?\s*(.*?)(?:```|$)", re.S)
 
@@ -29,7 +35,7 @@ class LLMClient:
     用法::
 
         client = LLMClient(config)
-        profile = client.chat_json(messages, ResumeProfile, temperature=0.2)
+        profile = client.chat_json(messages, ResumeProfile, temperature=DEFAULT_TEMPERATURE)
     """
 
     def __init__(self, config: LLMConfig, *, timeout: float = 60.0) -> None:
@@ -45,10 +51,10 @@ class LLMClient:
         messages: list[dict[str, Any]],
         schema: type[ModelT],
         *,
-        temperature: float = 0.2,
-        max_tokens: int = 2048,
-        frequency_penalty: float = 0.2,
-        presence_penalty: float = 0.1,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        frequency_penalty: float = DEFAULT_FREQUENCY_PENALTY,
+        presence_penalty: float = DEFAULT_PRESENCE_PENALTY,
     ) -> ModelT:
         """要求模型返回 JSON，并用 pydantic 模型校验。
 

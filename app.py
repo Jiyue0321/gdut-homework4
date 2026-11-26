@@ -11,6 +11,7 @@ from agent.config import load_config
 from agent.llm import LLMClient, LLMError
 from agent.orchestrator import InterviewConfig, Orchestrator
 from agent.state import Phase
+from agent.telemetry import CountingChat, InstrumentedTools, get_recorder
 from agent.tools import open_tools
 from ui import interview, report
 
@@ -33,6 +34,12 @@ def _get_context():
         st.error(str(exc))
         st.stop()
     return client, tools, config
+
+
+def _instrumented(client, tools):
+    """包一层观测：只记录调用次数与耗时，不改变任何行为。"""
+    recorder = get_recorder(st)
+    return CountingChat(client, recorder), InstrumentedTools(tools, recorder)
 
 
 def _new_interview(
@@ -83,12 +90,14 @@ def main() -> None:
         inputs = interview.setup_form(_industries(), extract=_extractor())
         if inputs:
             client, tools, _ = _get_context()
+            client, tools = _instrumented(client, tools)
             _new_interview(client, tools, *inputs)
             st.rerun()
         return
 
     orchestrator: Orchestrator = st.session_state.orchestrator
     _, tools, _ = _get_context()
+    tools = InstrumentedTools(tools, get_recorder(st))
 
     if session.phase in {Phase.REPORT, Phase.DONE}:
         report.render_report(session, tools)
