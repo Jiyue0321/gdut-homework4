@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p reports
           set -o pipefail
-          pytest --cov=agent --cov=mcp_server --cov=ui --cov=app \
+          pytest --cov=agent --cov=mcp_server --cov=ui --cov=app --cov=pages \
                  --cov-report=term-missing \
                  --cov-report=xml \
                  --junitxml=reports/junit.xml 2>&1 | tee reports/pytest.log

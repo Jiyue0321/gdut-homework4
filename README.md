@@ -92,8 +92,8 @@ python scripts/smoke_real_llm.py          # 真实模型冒烟：默认 dry-run�
 python scripts/smoke_real_llm.py --run    # 真跑完整 6 题，会消耗 API 额度
 ```
 
-当前 **185 passed / 1 deselected**，语句覆盖率 **86%**（`agent` / `mcp_server` / `ui` / `app.py`，
-共 1981 条语句，未覆盖 287 条）。
+当前 **185 passed / 1 deselected**，语句覆盖率 **85%**（`agent` / `mcp_server` / `ui` / `pages` / `app.py`，
+共 2142 条语句，未覆盖 331 条）。
 
 | 模块 | 覆盖率 | 说明 |
 | --- | --- | --- |
@@ -102,6 +102,7 @@ python scripts/smoke_real_llm.py --run    # 真跑完整 6 题，会消耗 API �
 | `mcp_server/pdf_report.py` | 95% | 含字体未内嵌时的回退分支 |
 | `mcp_server/toolkit.py` | 94% | 缺口匹配、抽题、评分聚合 |
 | `ui/` | 81–90% | 页面渲染与下载按钮 |
+| `pages/` | 73% | 只读后台页；基于会话状态的概览分支未在用例中铺满 |
 | `mcp_server/interview_server.py` | 0% | 仅由 `tests/integration/test_mcp_server.py` 以子进程方式调用，`coverage` 不跨进程统计 |
 | `agent/voice.py` | 0% | 只有 Protocol 与 `NotImplementedError` 占位，无逻辑可测 |
 
