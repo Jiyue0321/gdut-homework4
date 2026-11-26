@@ -9,6 +9,10 @@
 > 免费实例无访问时会休眠，冷启动约 30–60 秒，期间页面显示「Your app is waking up」，等待即可。
 > 演示或答辩前请提前打开一次预热。
 
+**界面原型**：`prototype/index.html`，浏览器直接打开即可（单文件、零依赖、无需构建）。
+前台 3 页 + 后台 4 页的高保真交互原型，不接后端，用于展示下一版界面设计；
+打开方式、演示数据边界与答辩截图清单见 [prototype/README.md](prototype/README.md)。
+
 应届生和转行者缺的往往不是题库，而是**有人像真实面试官一样追问到底，并告诉你差在哪里**。
 本项目用多智能体协作复现真实面试：先读简历与岗位，找出能力缺口，再针对缺口定向出题、
 逐层追问、交叉拷问，最后给出一份可执行的复盘报告。
@@ -49,6 +53,7 @@ Streamlit 界面（5 步向导）
 | `agent/` | 编排器、智能体、LLM 封装、确定性工具客户端、语音接口 |
 | `mcp_server/` | MCP 工具服务、评分函数、题库、路径沙箱 |
 | `ui/` | 页面与组件（雷达图、评分卡、对话记录、报告） |
+| `prototype/` | 高保真界面原型，单文件静态页，见 [prototype/README.md](prototype/README.md) |
 | `tests/` | 单元测试与 golden 集成测试 |
 | `scripts/` | 真实模型冒烟脚本 `smoke_real_llm.py`（默认 dry-run） |
 | `docs/` | 需求、设计、冲刺复盘、稳定性验证、原型接口约定 |
@@ -137,6 +142,7 @@ OPENAI_MODEL = "deepseek-chat"
 | [云端稳定性验证记录](docs/stability-check.md) | 冷启动、MCP 路径、PDF 字体、完整流程的实测数据 |
 | [真实模型冒烟回归记录](docs/smoke-real-llm.md) | 真 DeepSeek 跑完整链路的脚本、判定条件与实测记录 |
 | [原型后台接口约定](docs/prototype-api.md) | 概览 / 题库 / 配置三页的数据来源与后续实现边界 |
+| [原型说明](prototype/README.md) | 打开方式、技术栈、演示数据边界、答辩截图与录屏清单 |
 | [v0.9.0 Release 正文](docs/release-notes-v0.9.0.md) | Alpha 基线版本的发布说明 |
 
 设计说明书（系统设计 34 页、数据库设计 24 页）见 `docs/` 下两份 PDF。
