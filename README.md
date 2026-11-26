@@ -13,6 +13,10 @@
 前台 3 页 + 后台 4 页的高保真交互原型，不接后端，用于展示下一版界面设计；
 打开方式、演示数据边界与答辩截图清单见 [prototype/README.md](prototype/README.md)。
 
+**只读后台**：运行主站后，侧边栏进入「后台管理」，可查看题库统计、系统配置与本次会话的
+模型/工具调用记录。数据全部来自真实系统，**不写任何内容**——跨会话统计需要持久化，见
+[原型后台接口约定](docs/prototype-api.md) §5.2。
+
 应届生和转行者缺的往往不是题库，而是**有人像真实面试官一样追问到底，并告诉你差在哪里**。
 本项目用多智能体协作复现真实面试：先读简历与岗位，找出能力缺口，再针对缺口定向出题、
 逐层追问、交叉拷问，最后给出一份可执行的复盘报告。
@@ -50,6 +54,7 @@ Streamlit 界面（5 步向导）
 | 目录 | 说明 |
 | --- | --- |
 | `app.py` | Streamlit 入口与 5 步向导 |
+| `pages/` | 只读后台页（概览 / 题库 / 配置 / 运行日志），与主站共享会话 |
 | `agent/` | 编排器、智能体、LLM 封装、确定性工具客户端、语音接口 |
 | `mcp_server/` | MCP 工具服务、评分函数、题库、路径沙箱 |
 | `ui/` | 页面与组件（雷达图、评分卡、对话记录、报告） |
@@ -87,12 +92,13 @@ python scripts/smoke_real_llm.py          # 真实模型冒烟：默认 dry-run�
 python scripts/smoke_real_llm.py --run    # 真跑完整 6 题，会消耗 API 额度
 ```
 
-当前 **173 passed / 1 deselected**，语句覆盖率 **84%**（`agent` / `mcp_server` / `ui` / `app.py`，
-共 1862 条语句，未覆盖 289 条）。
+当前 **185 passed / 1 deselected**，语句覆盖率 **86%**（`agent` / `mcp_server` / `ui` / `app.py`，
+共 1981 条语句，未覆盖 287 条）。
 
 | 模块 | 覆盖率 | 说明 |
 | --- | --- | --- |
 | `agent/orchestrator.py` | 94% | 状态机主路径与失败分支 |
+| `agent/telemetry.py` | 93% | 观测层：调用计数、耗时、失败标记与事件上限 |
 | `mcp_server/pdf_report.py` | 95% | 含字体未内嵌时的回退分支 |
 | `mcp_server/toolkit.py` | 94% | 缺口匹配、抽题、评分聚合 |
 | `ui/` | 81–90% | 页面渲染与下载按钮 |
@@ -141,7 +147,7 @@ OPENAI_MODEL = "deepseek-chat"
 | [成员分工与工作量](docs/alpha-workload.md) | S1–S11 任务的交付物、人天与占比 |
 | [云端稳定性验证记录](docs/stability-check.md) | 冷启动、MCP 路径、PDF 字体、完整流程的实测数据 |
 | [真实模型冒烟回归记录](docs/smoke-real-llm.md) | 真 DeepSeek 跑完整链路的脚本、判定条件与实测记录 |
-| [原型后台接口约定](docs/prototype-api.md) | 概览 / 题库 / 配置三页的数据来源与后续实现边界 |
+| [原型后台接口约定](docs/prototype-api.md) | 后台各页数据来源、Alpha 只读实现记录与 Beta 持久化 A 计划 |
 | [原型说明](prototype/README.md) | 打开方式、技术栈、演示数据边界、答辩截图与录屏清单 |
 | [v0.9.0 Release 正文](docs/release-notes-v0.9.0.md) | Alpha 基线版本的发布说明 |
 

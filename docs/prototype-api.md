@@ -2,7 +2,7 @@
 
 **项目**：面面俱到 · 模拟面试多智能体
 **对应任务**：Alpha 冲刺 S10
-**文档版本**：V1.0（待双签）　**编写日期**：2026-11-23　**最近更新**：2026-11-26（按入库后的 `prototype/index.html` 核对工具数、后台页数与题库字段）
+**文档版本**：V1.1（待双签）　**编写日期**：2026-11-23　**最近更新**：2026-11-26（补 Alpha 只读后台落地记录与 Beta 持久化 A 计划）
 **主笔**：后端 / 部署角色　**确认**：前端 / 原型角色
 
 > **本文档的性质**：只写「页面上的每个字段从哪来」，**Alpha 期内不实现后台功能**。
@@ -196,14 +196,75 @@
 
 | # | 工具签名 | 用途 | 落在哪 | 工作量 |
 | --- | --- | --- | --- | --- |
-| 1 | `partial_score(turns_json, weights_json) -> {overall_score, dimensions}` | 面试进行页右上实时总分 | `mcp_server/toolkit.py`，内部直接调 `aggregate_scores` | 0.2 天 |
-| 2 | `list_bank_stats() -> {total, by_industry, by_agent, by_competency}` | 题库页三张统计卡 | 同上，包一层 `load_bank()` | 0.2 天 |
-| 3 | `list_prompt_templates() -> {name, text}[]` | 配置页 Prompt 列表 | 同上，读 `agent/prompts` 常量 | 0.2 天 |
-| 4 | `llm_call_count()` | 概览页 AI 调用次数 | `agent/llm.py` 加 `itertools.count` 计数器 | 0.3 天 |
+| 1 | `partial_score(turns_json, weights_json) -> {overall_score, dimensions}` | 面试进行页右上实时总分 | `mcp_server/toolkit.py`，内部直接调 `aggregate_scores` | ✅ 已在后台页内联实现 |
+| 2 | `list_bank_stats() -> {total, by_industry, by_agent, by_competency}` | 题库页三张统计卡 | 同上，包一层 `load_bank()` | ✅ 已在后台页内联实现 |
+| 3 | `list_prompt_templates() -> {name, text}[]` | 配置页 Prompt 列表 | 同上，读 `agent/prompts` 常量 | ✅ 已在后台页内联实现 |
+| 4 | `llm_call_count()` | 概览页 AI 调用次数 | `agent/llm.py` 加 `itertools.count` 计数器 | ✅ 已由 `agent/telemetry.py` 的会话记录器代替 |
 | 5 | 题库 `difficulty` / `status` 字段 | 题库页筛选与状态 | `data/question_bank.json` + `pick_questions` 过滤 | 1 天（含人工标注） |
 | 6 | 会话 / 轮次入库 | 概览页全部指标 | 随 V2.2 SQLite | 3 天+ |
 
-> 1–4 合计约 0.9 天，**可以排在 Beta 第一周**；5–6 是 V2.2 的活，Alpha 不碰。
+> 1–4 在 Alpha 期已用「页面内联 + 会话级观测」的方式落地（见 §5.1），**不新增 MCP 工具**——
+> 这几项都是纯读，没必要为它们多绕一层子进程。5–6 是 V2.2 的活，Alpha 不碰。
+
+### 5.1 Alpha 已落地的只读后台（2026-11-26）
+
+Alpha 期确认「只读后台、不碰持久化」，实现为独立的 Streamlit 多页面 `pages/1_后台管理.py`，
+与主站共享 `st.session_state`，**不改动 `app.py` 的任何流程**。
+
+| 页面 | 实现方式 | 数据真实性 |
+| --- | --- | --- |
+| 数据概览 | 读 `st.session_state.session`，用 `rubric.competency_averages` / `weighted_total` 实时聚合 | **本次会话真实数据**；跨会话指标明确标注「待 V2.2」 |
+| 题库管理 | 直接读 `data/question_bank.json`，前端筛选 + 导出筛选结果 | **全站真实数据**（98 题 / 9 行业 / 27·45·26） |
+| 系统配置 | 读 `load_config()`、`agent/prompts` 常量、`INDUSTRY_KEYWORDS`，Key 只显示掩码 | **真实配置**；只读，不可改 |
+| 运行日志 | `agent/telemetry.py` 的 `Recorder` 记录模型与工具调用 | **本次会话真实调用**；不落盘 |
+
+**观测层的接线方式**：`app.py` 用 `CountingChat` / `InstrumentedTools` 把 `LLMClient` 与工具层
+各包一层，只记调用次数、耗时与结果摘要，行为完全透传。`InstrumentedTools` 用 `__getattr__`
+统一包装，将来新增工具无需改观测代码。
+
+**为什么不做写入**：题库是只读 JSON、配置在 `.env` / Secrets、会话在浏览器里，三者都没有写入位置；
+且 Streamlit Cloud 的容器文件系统在重启后重置，线上写文件本身不可靠。
+
+### 5.2 Beta 持久化方案（A 计划：留在 Streamlit Cloud + 托管数据库）
+
+**结论：加持久化不需要换部署方式。** 真正要解决的不是「在哪跑」，而是「数据放在一个不随容器消失的地方」。
+
+| 方案 | 换部署 | 做法 | 成本 |
+| --- | --- | --- | --- |
+| **A. 留 Streamlit Cloud + 外部数据库**（推荐） | 否 | 接 Turso/libSQL 或 Supabase/Neon，加 1 个客户端依赖 + 1 条 Secrets | 低 |
+| B. 换到有持久卷的平台 | 是 | Fly.io / Railway / Render 挂 volume，或 VPS 跑 Docker | 中高 |
+| C. 不做持久化 | 否 | 维持只读后台，概览与日志只覆盖本次会话 | 低 |
+
+**选 A 的理由**
+
+- 部署方式一行不改：`requirements.txt` 加一个客户端库，Secrets 加一行 `DATABASE_URL`。
+- 数据库由 Streamlit Cloud 的服务器直连，**与国内访问速度无关**，不经过用户本机网络。
+- 免费额度远超课程项目所需（Turso 9 GB / Supabase 500 MB）。
+- 免费实例休眠不影响：数据在外部，醒来接着查。
+
+**A 的两个坑**
+
+1. **HTTP 数据库每次写入有一次网络往返**，比本地 SQLite 慢一个数量级。会话结束写一条记录没问题，
+   但**不要在每轮答题时同步写**——要么攒到会话结束一次性写，要么丢后台队列。
+2. **写操作不能走 `lru_cache`**。题库的 `_load_raw` 有缓存，写入路径要绕开它。
+
+**建议的代码形状**（关键是把持久化做成协议，默认走内存实现）
+
+```
+agent/storage.py
+  ├─ Storage Protocol   record_session / list_sessions / stats
+  ├─ MemoryStorage      测试与 AppTest 用，零依赖
+  └─ RemoteStorage      Turso / Postgres 实现
+```
+
+这样 `tests/integration/test_app_flow.py` 的用例不连数据库，本地开发也不需要数据库就能跑，
+换数据库只改一个实现类。§4.1 的建表草案（`interview_sessions` / `interview_turns`）可直接照用。
+
+**为什么不选 B**：换平台要补 `Dockerfile`、处理 HTTPS、重验 PDF 中文字体回退链、重测冷启动——
+这些在 `docs/stability-check.md` 里刚验证过，换平台等于全部作废。为一个后台页面做这件事性价比很低。
+
+**排期建议**：A 的完整实现（建表、协议、接库、改路由、补测试、云端联调）约 6–7 人天，
+建议排在 Beta 第一周，**不在 Alpha 冲刺期内做**。
 
 ---
 
@@ -293,3 +354,4 @@ Beta 需在 `Slot` 加 `source: Literal["resume", "job"]` 并改 `_build_plan`�
 | --- | --- | --- |
 | V0.9 | 2026-11-23 | 初稿：按设计说明书附录 A 的 5 张原型截图逐字段核对，标注数据来源与缺口，待前后端双签 |
 | V1.0 | 2026-11-26 | 原型源码入库 `prototype/` 后复核：工具数 13→14；后台结构由「2 页有内容」补全为 4 页，并纳入规则说明页；能力标签 13→10；题库字段按实际只有 5 个键说明 |
+| V1.1 | 2026-11-26 | 新增 §5.1 Alpha 只读后台落地记录、§5.2 Beta 持久化 A 计划（留 Streamlit Cloud + 托管数据库）；§5 前四项标记为已在页面内联实现 |
