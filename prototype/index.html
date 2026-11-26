@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>面面俱到 · 模拟面试原型</title>
+<style>
+:root{
+  --blue:#2E5EAA; --blue-d:#22467F; --blue-l:#E8EEF7; --blue-ll:#F4F8FE;
+  --ink:#1F2937; --muted:#5A6472; --line:#D5DDE8; --amber:#D9A441;
+  --amber-l:#FFF4E5; --green:#3B8C6E; --green-l:#EAF5EF; --red:#D9534F;
+  --red-l:#FDEDEC; --bg:#F5F7FA; --white:#fff;
+  --shadow:0 6px 20px rgba(31,59,110,.10); --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+a{color:var(--blue);text-decoration:none}
+.topbar{background:linear-gradient(100deg,#22467F,#2E5EAA 55%,#4A7BC8);color:#fff;padding:0 26px;height:64px;display:flex;align-items:center;gap:24px;position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.5px}
+.logo .mark{width:32px;height:32px;border-radius:9px;background:#fff;color:var(--blue);display:grid;place-items:center;font-size:15px;font-weight:800}
+.logo small{display:block;font-size:11px;font-weight:400;opacity:.8;letter-spacing:1px}
+.nav{display:flex;gap:6px;margin-left:auto}
+.nav button{background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;transition:.2s}
+.nav button:hover{background:rgba(255,255,255,.14)}
+.nav button.active{background:#fff;color:var(--blue);border-color:#fff;font-weight:700}
+.proto-tag{font-size:11px;background:var(--amber-l);color:#8A5A12;border:1px solid var(--amber);border-radius:5px;padding:3px 8px;margin-left:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+.banner{background:linear-gradient(90deg,#FFF9EC,#FFFDF7);border:1px solid #F0D9A6;border-left:4px solid var(--amber);border-radius:10px;padding:10px 16px;font-size:13px;color:#7A5514;margin-bottom:18px}
+.view{display:none;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.view-head h1{margin:0;font-size:22px;color:var(--blue-d)}
+.view-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card h2{margin:0 0 14px;font-size:16px;color:var(--blue-d);border-left:4px solid var(--blue);padding-left:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+label.fld{display:block;font-weight:600;font-size:13px;margin:12px 0 6px;color:var(--blue-d)}
+input[type=text],select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#FBFCFE;color:var(--ink);outline:none;transition:.2s}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(46,94,170,.12);background:#fff}
+textarea{min-height:150px;resize:vertical;line-height:1.7}
+.btn{border:none;border-radius:9px;padding:10px 18px;cursor:pointer;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:7px}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.primary:hover{background:var(--blue-d);transform:translateY(-1px)}
+.btn.ghost{background:var(--blue-l);color:var(--blue-d);border:1px solid #C7D6EC}
+.btn.ghost:hover{background:#DAE7F8}
+.btn.line{background:#fff;color:var(--blue-d);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn.sm{padding:6px 12px;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.hint{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+.pill.hr{background:#E8F0FF;color:#2E5EAA}.pill.tech{background:#EAF5EF;color:#2B7A5C}.pill.prs{background:#FDEDEC;color:#C04541}
+.pill.ok{background:#EAF5EF;color:#2B7A5C}.pill.warn{background:var(--amber-l);color:#96641A}
+.steps{display:flex;gap:8px;margin-bottom:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.step{flex:1;text-align:center;padding:9px;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13px;transition:.2s}
+.step .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--blue-l);color:var(--blue);margin-right:7px;font-size:12px}
+.step.active{background:var(--blue);color:#fff}.step.active .n{background:#fff;color:var(--blue)}
+.step.done{background:var(--green-l);color:var(--green)}
+.progress{height:9px;background:var(--blue-l);border-radius:20px;overflow:hidden;margin:10px 0 16px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#2E5EAA,#5B8EDB);border-radius:20px;transition:width .4s}
+.qcard{background:linear-gradient(135deg,#F4F8FE,#FFFFFF);border:1px solid #CBD9EE;border-radius:12px;padding:18px;margin-bottom:14px}
+.qcard .who{font-size:12px;color:var(--muted);margin-bottom:8px}
+.qcard .q{font-size:17px;font-weight:700;line-height:1.6;margin-bottom:10px}
+details{border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-top:10px;background:#FBFCFE}
+summary{cursor:pointer;font-weight:600;color:var(--blue-d);font-size:13px}
+details p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.turn{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff}
+.turn .t1{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:600}
+.turn .t2{font-size:12px;color:var(--muted);margin-top:5px}
+.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.metric .v{font-size:26px;font-weight:800;color:var(--blue);line-height:1.2}
+.metric .k{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--blue-l);color:var(--blue-d);text-align:left;padding:9px 10px;border:1px solid #CBD9EE;font-size:12px}
+td{padding:8px 10px;border:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:#FAFCFF}
+.alert{background:var(--red-l);border-left:4px solid var(--red);padding:10px 14px;border-radius:8px;font-size:13px;color:#9B3B37;margin:12px 0}
+.note{background:var(--green-l);border-left:4px solid var(--green);padding:10px 14px;border-radius:8px;font-size:13px;color:#2B6B53;margin:12px 0}
+ul.clean{margin:6px 0;padding-left:20px}ul.clean li{margin:5px 0}
+.legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.side{width:190px;flex-shrink:0}
+.side button{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin-bottom:8px;cursor:pointer;color:var(--blue-d);font-weight:600}
+.side button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.admin-wrap{display:flex;gap:16px;align-items:flex-start}
+.admin-main{flex:1;min-width:0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat .v{font-size:24px;font-weight:800;color:var(--blue)}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .d{font-size:11px;color:var(--green);margin-top:4px}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)}
+.switch:last-child{border:none}
+.toggle{width:44px;height:24px;border-radius:20px;background:#CBD5E1;position:relative;cursor:pointer;transition:.2s;flex-shrink:0}
+.toggle::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{background:var(--blue)}.toggle.on::after{left:23px}
+.log{font-family:Consolas,monospace;font-size:12px;background:#0F2038;color:#B9D4F5;border-radius:10px;padding:14px;line-height:1.8;overflow-x:auto}
+.log .t{color:#7FB3F0}.log .ok{color:#7BD3A6}.log .wn{color:#F2C879}
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.flow .node{background:var(--blue-l);border:1px solid #C7D6EC;border-radius:10px;padding:12px 14px;min-width:150px;flex:1;text-align:center;font-weight:600;color:var(--blue-d);font-size:13px}
+.flow .arrow{display:grid;place-items:center;color:var(--blue);font-size:20px;font-weight:800}
+.toast{position:fixed;right:24px;bottom:24px;background:#18345F;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:60;opacity:0;transform:translateY(12px);transition:.25s;pointer-events:none;max-width:340px;font-size:13px}
+.toast.show{opacity:1;transform:none}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo"><span class="mark">面</span><span>面面俱到<small>MockStar · 模拟面试多智能体</small></span></div>
+  <nav class="nav">
+    <button class="active" onclick="switchView('front')">前台应用原型</button>
+    <button onclick="switchView('admin')">后台管理原型</button>
+    <button onclick="switchView('rules')">交互与规则说明</button>
+  </nav>
+  <span class="proto-tag">有备而来队</span>
+</header>
+
+<div class="wrap">
+
+  <!-- ==================== 前台 ==================== -->
+  <section id="front" class="view active">
+    <div class="view-head">
+      <div><h1>前台应用原型</h1><p>候选人视角：录入简历与 JD → 三位面试官轮流提问 → 复盘报告与导出</p></div>
+      <span class="pill ok">三态页面流程</span>
+    </div>
+    <div class="steps">
+      <div class="step active" id="s1" onclick="goStep(1)"><span class="n">1</span>录入简历与 JD</div>
+      <div class="step" id="s2" onclick="goStep(2)"><span class="n">2</span>模拟面试进行</div>
+      <div class="step" id="s3" onclick="goStep(3)"><span class="n">3</span>复盘报告</div>
+    </div>
+
+    <!-- 录入页 -->
+    <div id="f1">
+      <div class="grid2">
+        <div class="card">
+          <h2>个人简历</h2>
+          <label class="fld">简历正文</label>
+          <textarea id="resume" placeholder="粘贴你的简历，或上传 PDF / TXT / Markdown"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn ghost sm" onclick="fill('resume')">填入示例简历</button>
+            <button class="btn line sm" onclick="toast('原型演示：真实系统支持上传 PDF / TXT / MD，自动抽取文字并回填')">上传文件导入</button>
+            <span class="spacer"></span><span class="hint" id="resumeCnt">0 字</span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>目标岗位</h2>
+          <label class="fld">岗位 JD 正文</label>
+          <textarea id="jd" placeholder="粘贴目标岗位的职责与要求"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn ghost sm" onclick="fill('jd')">填入示例 JD</button>
+            <span class="spacer"></span><span class="hint" id="jdCnt">0 字</span>
+          </div>
+          <div class="grid2" style="gap:10px">
+            <div><label class="fld">岗位名称</label><input type="text" id="role" value="后端开发实习生"/></div>
+            <div><label class="fld">目标行业</label>
+              <select id="industry">
+                <option>自动</option><option>互联网后端</option><option>互联网前端</option>
+                <option>人工智能</option><option>数据分析</option><option>软件测试</option>
+                <option>嵌入式</option><option>产品运营</option><option>金融科技</option><option>通用</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div><strong id="formHint" style="color:var(--red)">填写简历和 JD 后即可开始面试</strong>
+            <div class="hint">规则：两项均非空才显示开始按钮；文件 ≤ 10 MB；抽取文本自动清洗不可见字符。</div></div>
+          <span class="spacer"></span>
+          <button class="btn primary" id="startBtn" disabled onclick="startInterview()">开始面试</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 面试页 -->
+    <div id="f2" class="hide">
+      <div class="card">
+        <div class="row"><strong>面试进度</strong><span class="spacer"></span><span class="hint" id="progText">进度 1/6 题</span></div>
+        <div class="progress"><i id="progBar" style="width:16%"></i></div>
+        <div class="qcard">
+          <div class="who"><span id="whoPill" class="pill hr">HR 面试官</span> <span id="followTag"></span> <span class="hint" id="focusText">考察能力：岗位动机</span></div>
+          <div class="q" id="qText">请做一个自我介绍，并说明为什么选择这个岗位？</div>
+          <details><summary>本题考察什么</summary><p id="rubricText">评分要点：动机清晰、与岗位匹配、表达有条理；优秀回答会结合具体项目与量化结果说明选择理由。</p></details>
+        </div>
+        <label class="fld">你的回答</label>
+        <textarea id="answer" style="min-height:96px" placeholder="像真实面试一样作答，尽量给出具体项目与量化依据"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" onclick="submitAnswer()">提交回答</button>
+          <span class="hint">规则：空 / 少于 8 字 / 被判定为系统反馈时不推进、不打分</span>
+          <span class="spacer"></span><span class="hint" id="ansHint"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>已答轮次（可展开评分与依据）</h2>
+        <div id="turnList"><div class="hint">暂无作答记录</div></div>
+      </div>
+    </div>
+
+    <!-- 报告页 -->
+    <div id="f3" class="hide">
+      <div class="grid3">
+        <div class="metric"><div class="v">3.6</div><div class="k">加权总分 / 5</div></div>
+        <div class="metric"><div class="v">6</div><div class="k">面试用时题数</div></div>
+        <div class="metric"><div class="v" style="font-size:20px">基本达标</div><div class="k">结论</div></div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="card">
+          <h2>能力缺口雷达</h2>
+          <svg viewBox="0 0 320 290" style="width:100%;height:auto">
+            <g stroke="#D5DDE8" fill="none">
+              <polygon points="160,35 275,118 231,245 89,245 45,118"/>
+              <polygon points="160,70 240,128 211,216 109,216 80,128"/>
+              <polygon points="160,105 205,138 191,187 129,187 115,138"/>
+            </g>
+            <g stroke="#D5DDE8"><line x1="160" y1="35" x2="160" y2="245"/><line x1="45" y1="118" x2="275" y2="118"/><line x1="89" y1="245" x2="231" y2="95"/><line x1="231" y1="245" x2="89" y2="95"/></g>
+            <polygon points="160,42 262,120 224,238 96,238 58,120" fill="rgba(46,94,170,.10)" stroke="#2E5EAA" stroke-width="2"/>
+            <polygon points="160,78 228,132 202,205 118,205 92,132" fill="rgba(217,164,65,.10)" stroke="#D9A441" stroke-width="2" stroke-dasharray="5 3"/>
+            <polygon points="160,96 212,140 190,196 130,196 108,140" fill="rgba(59,140,110,.12)" stroke="#3B8C6E" stroke-width="2"/>
+            <g font-size="11" fill="#5A6472" text-anchor="middle">
+              <text x="160" y="25">技术深度</text><text x="292" y="120">工程实践</text>
+              <text x="238" y="262">系统设计</text><text x="82" y="262">沟通表达</text><text x="28" y="120">岗位动机</text>
+            </g>
+          </svg>
+          <div class="legend"><span><i style="background:#2E5EAA"></i>岗位要求</span><span><i style="background:#D9A441"></i>简历自评</span><span><i style="background:#3B8C6E"></i>面试实测</span></div>
+        </div>
+        <div class="card">
+          <h2>交叉拷问（最弱一题）</h2>
+          <p class="hint">题目：请说明你在高并发场景下如何定位并解决性能瓶颈。</p>
+          <table><thead><tr><th>视角</th><th>得分</th><th>评语</th></tr></thead><tbody>
+            <tr><td>HR 面试官</td><td>3</td><td>表达清楚，但缺少协作过程</td></tr>
+            <tr><td>技术面试官</td><td>2</td><td>未给出监控指标与量化结果</td></tr>
+            <tr><td>压力面试官</td><td>3</td><td>被追问后回答开始含糊</td></tr>
+            <tr><td><strong>综合中位数</strong></td><td><strong>3.0</strong></td><td>由确定性代码合并</td></tr>
+          </tbody></table>
+          <div class="alert">需要优先补强的能力：系统设计、工程实践（面试实测低于 2.5）</div>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="card"><h2>你的优势</h2><ul class="clean"><li>项目经历描述完整，能给出时间与规模</li><li>技术选型理由表达清晰</li></ul></div>
+        <div class="card"><h2>待改进</h2><ul class="clean"><li>缺少量化指标与结果验证</li><li>被追问后容易绕开问题</li></ul></div>
+        <div class="card"><h2>行动清单（2 周内）</h2><ul class="clean"><li>用 STAR 法重写 2 个项目亮点并补数据</li><li>为最弱题准备一版参考答案</li><li>再完成一次模拟面试验证改进</li></ul></div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <button class="btn ghost" onclick="toast('原型演示：真实系统导出 UTF-8 的面试复盘报告.md')">下载复盘报告（Markdown）</button>
+          <button class="btn ghost" onclick="toast('原型演示：真实系统导出 A4 中文的面试复盘报告.pdf')">下载复盘报告（PDF）</button>
+          <span class="spacer"></span>
+          <button class="btn line" onclick="resetAll()">再面一次</button>
+        </div>
+        <div class="note">页面、Markdown、PDF 三处共用同一份 report_data，分数与结论完全一致，不重复计算评分。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 后台 ==================== -->
+  <section id="admin" class="view">
+    <div class="view-head"><div><h1>后台管理原型</h1><p>运维 / 内容管理视角：题库维护、系统配置与运行观测（真实系统当前版本以配置文件管理，本页为设计原型）</p></div><span class="pill warn">设计原型</span></div>
+    <div class="admin-wrap">
+      <div class="side">
+        <button class="active" onclick="adminTab('a1',this)">数据概览</button>
+        <button onclick="adminTab('a2',this)">题库管理</button>
+        <button onclick="adminTab('a3',this)">系统配置</button>
+        <button onclick="adminTab('a4',this)">运行日志</button>
+      </div>
+      <div class="admin-main">
+        <div id="a1">
+          <div class="grid4">
+            <div class="stat"><div class="v">98</div><div class="k">题库参考题</div><div class="d">覆盖 9 个行业</div></div>
+            <div class="stat"><div class="v">9</div><div class="k">行业标签</div><div class="d">通用 + 8 个行业</div></div>
+            <div class="stat"><div class="v">6</div><div class="k">默认题量</div><div class="d">可配置 3–N</div></div>
+            <div class="stat"><div class="v">14</div><div class="k">确定性工具</div><div class="d">MCP 服务注册</div></div>
+          </div>
+          <div class="card" style="margin-top:16px"><h2>最近面试记录（演示数据）</h2>
+            <table><thead><tr><th>会话</th><th>岗位</th><th>行业</th><th>总分</th><th>结论</th><th>导出</th></tr></thead><tbody>
+              <tr><td>S-20261111-01</td><td>后端开发实习生</td><td>互联网后端</td><td>3.6</td><td>基本达标</td><td>MD / PDF</td></tr>
+              <tr><td>S-20261111-02</td><td>算法工程师</td><td>人工智能</td><td>4.2</td><td>表现出色</td><td>MD</td></tr>
+              <tr><td>S-20261110-07</td><td>数据分析师</td><td>数据分析</td><td>2.8</td><td>存在明显缺口</td><td>PDF</td></tr>
+              <tr><td>S-20261110-06</td><td>前端开发</td><td>互联网前端</td><td>3.1</td><td>基本达标</td><td>MD / PDF</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <div id="a2" class="hide"><div class="card">
+          <h2>题库管理</h2>
+          <div class="row">
+            <select id="fIndustry" style="width:170px" onchange="filterBank()"><option value="">全部行业</option><option>通用</option><option>互联网后端</option><option>互联网前端</option><option>人工智能</option><option>数据分析</option><option>软件测试</option><option>嵌入式</option><option>产品运营</option><option>金融科技</option></select>
+            <select id="fAgent" style="width:150px" onchange="filterBank()"><option value="">全部角色</option><option value="hr">HR</option><option value="tech">技术</option><option value="pressure">压力</option></select>
+            <input type="text" id="fKey" placeholder="搜索题目关键词" style="width:230px" oninput="filterBank()"/>
+            <span class="spacer"></span><button class="btn ghost sm" onclick="toast('原型演示：真实系统题库为只读静态 JSON，修改需提交仓库')">新增题目</button>
+          </div>
+          <table style="margin-top:14px"><thead><tr><th style="width:90px">题号</th><th style="width:110px">行业</th><th style="width:80px">角色</th><th>题面</th><th style="width:120px">能力标签</th></tr></thead><tbody id="bankBody"></tbody></table>
+          <div class="row" style="margin-top:12px"><span class="hint" id="bankCount"></span><span class="spacer"></span><button class="btn line sm" onclick="toast('原型演示：共 98 题，此处展示 12 条样例')">上一页</button><button class="btn line sm" onclick="toast('原型演示：共 98 题，此处展示 12 条样例')">下一页</button></div>
+        </div></div>
+        <div id="a3" class="hide"><div class="card"><h2>系统配置</h2>
+          <div class="grid2">
+            <div>
+              <label class="fld">大模型供应商</label><select><option>DeepSeek · deepseek-chat</option><option>通义千问 · qwen-plus</option><option>智谱 GLM · glm-4-flash</option></select>
+              <label class="fld">默认题量上限</label><input type="text" value="6"/>
+              <label class="fld">每轮参考题数</label><input type="text" value="2"/>
+              <label class="fld">行业选择默认值</label><select><option>自动</option><option>通用</option></select>
+            </div>
+            <div>
+              <div class="switch"><span>允许自适应追问<small class="hint" style="display:block">每个考察点最多 1 次</small></span><span class="toggle on" onclick="tg(this)"></span></div>
+              <div class="switch"><span>开启交叉拷问<small class="hint" style="display:block">最弱一题三视角评分</small></span><span class="toggle on" onclick="tg(this)"></span></div>
+              <div class="switch"><span>使用 MCP 子进程<small class="hint" style="display:block">关闭则进程内直调</small></span><span class="toggle on" onclick="tg(this)"></span></div>
+              <div class="switch"><span>作答意图过滤<small class="hint" style="display:block">纯规则判定，零大模型调用</small></span><span class="toggle on" onclick="tg(this)"></span></div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:14px"><button class="btn primary" onclick="toast('原型演示：配置已记录（真实系统写入 .env / Streamlit Secrets）')">保存配置</button><span class="hint">API Key 不入库、不写日志、不回显</span></div>
+        </div></div>
+        <div id="a4" class="hide"><div class="card"><h2>运行日志（演示）</h2>
+          <div class="log">
+<span class="t">[19:12:03]</span> <span class="ok">INFO</span>  start() phase=PARSE_RESUME session=S-20261111-01<br>
+<span class="t">[19:12:03]</span> <span class="ok">INFO</span>  tool check_resume_quality -> sections=4 quantified=3<br>
+<span class="t">[19:12:05]</span> <span class="ok">INFO</span>  llm chat_json schema=ResumeProfile ok (1.7s)<br>
+<span class="t">[19:12:07]</span> <span class="ok">INFO</span>  llm chat_json schema=CompetencyModel ok (1.9s)<br>
+<span class="t">[19:12:08]</span> <span class="ok">INFO</span>  tool detect_industry -> 互联网后端<br>
+<span class="t">[19:12:08]</span> <span class="ok">INFO</span>  tool pick_questions count=2 industry=互联网后端<br>
+<span class="t">[19:12:44]</span> <span class="wn">WARN</span>  duplicate question detected, regenerating once<br>
+<span class="t">[19:13:12]</span> <span class="ok">INFO</span>  tool merge_cross_exam -> merged=3.0<br>
+<span class="t">[19:13:14]</span> <span class="ok">INFO</span>  tool aggregate_scores -> overall_score=3.6 verdict=基本达标<br>
+<span class="t">[19:13:16]</span> <span class="ok">INFO</span>  render_report_md / render_report_pdf same report_data<br>
+          </div>
+          <div class="note">日志中不包含任何 API Key、简历原文或用户身份信息。</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 规则说明 ==================== -->
+  <section id="rules" class="view">
+    <div class="view-head"><div><h1>交互与规则说明</h1><p>原型中的页面流转、校验规则、交互细节与突出特点</p></div></div>
+    <div class="card"><h2>页面流转</h2>
+      <div class="flow">
+        <div class="node">1 录入简历与 JD<br><span class="hint">表单 / 文件导入</span></div><div class="arrow">→</div>
+        <div class="node">2 面试进行<br><span class="hint">逐题 / 追问 / 评分</span></div><div class="arrow">→</div>
+        <div class="node">3 复盘报告<br><span class="hint">雷达 / 拷问 / 导出</span></div><div class="arrow">→</div>
+        <div class="node">再面一次 / 重试<br><span class="hint">会话重置或阶段恢复</span></div>
+      </div>
+      <div class="note">前台为三个页面状态，由 `st.session_state.session.phase` 驱动；追问不推进题号，题量用尽后自动进入复盘。</div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>交互规则</h2>
+        <table><thead><tr><th>编号</th><th>交互</th><th>规则与反馈</th></tr></thead><tbody>
+          <tr><td>R1</td><td>开始面试</td><td>简历与 JD 任一为空时不显示按钮，提示「填写简历和 JD 后即可开始面试」</td></tr>
+          <tr><td>R2</td><td>示例填充</td><td>一键填入含「广东工业大学」的示例简历与「后端开发实习生」示例 JD</td></tr>
+          <tr><td>R3</td><td>文件导入</td><td>PDF / TXT / MD ≤ 10 MB，抽取文字回填后仍可编辑；同一文件只解析一次</td></tr>
+          <tr><td>R4</td><td>提交回答</td><td>空或少于 8 字提示重答；命中系统反馈关键词时不打分、不推进</td></tr>
+          <tr><td>R5</td><td>自适应追问</td><td>回答含糊时同一考察点追问一次，标注「（追问）」且题号不变</td></tr>
+          <tr><td>R6</td><td>进度条</td><td>显示「进度 x/y 题」，y 默认 6，追问不增加 x</td></tr>
+          <tr><td>R7</td><td>展开详情</td><td>当前题可展开评分要点；已答题可展开依据与评语</td></tr>
+          <tr><td>R8</td><td>报告下载</td><td>Markdown 与 PDF 同源渲染，分数与页面一致</td></tr>
+          <tr><td>R9</td><td>失败重试</td><td>提供「重试当前步骤」「重新生成复盘结论」，无需重开面试</td></tr>
+          <tr><td>R10</td><td>再面一次</td><td>清空会话回到录入页</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card"><h2>原型突出特点</h2>
+        <ul class="clean">
+          <li><strong>前台 + 后台双视角</strong>：既覆盖候选人完整旅程，也给出题库、配置、日志的管理界面，便于评审理解系统全貌。</li>
+          <li><strong>可点击的真实交互</strong>：表单校验、示例填充、逐题作答、追问演示、题库筛选、开关配置均可操作，不是静态截图。</li>
+          <li><strong>规则可见</strong>：把意图过滤、追问、去重、同源导出等隐藏逻辑显式写成规则表，与设计说明书一一对应。</li>
+          <li><strong>视觉一致</strong>：沿用产品主色 #2E5EAA 与浅蓝底 #E8EEF7，三类面试官用不同色标区分，报告页雷达图三条曲线与需求一致。</li>
+        </ul>
+        <div class="note">后台管理原型属于概要设计中的管理能力设计：当前 V1.7.1 以配置文件与静态题库实现等价能力，后续版本可据此落地管理界面。</div>
+      </div>
+    </div>
+    <div class="card"><h2>原型与真实系统的对应关系</h2>
+      <table><thead><tr><th>原型页面</th><th>真实实现</th><th>需求编号</th></tr></thead><tbody>
+        <tr><td>录入页</td><td>`ui/interview.py:setup_form`、`mcp_server/document.py`</td><td>F1</td></tr>
+        <tr><td>面试进行页</td><td>`ui/interview.py:interview_body`、`agent/orchestrator.py`</td><td>F2、F6、F11</td></tr>
+        <tr><td>复盘报告页</td><td>`ui/report.py:render_report`、`mcp_server/pdf_report.py`</td><td>F3、F9</td></tr>
+        <tr><td>题库管理 / 配置 / 日志</td><td>`data/question_bank.json`、`agent/config.py`、`USE_MCP` 开关</td><td>F10、N1、N2</td></tr>
+      </tbody></table>
+    </div>
+  </section>
+
+  <div class="foot">有备而来队 · 面面俱到　|　软件工程第二次团队作业 · 原型设计　|　团队仓库：github.com/Jiyue0321/gdut-homework4</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const QUESTIONS=[
+ {a:'hr',pill:'hr',who:'HR 面试官',focus:'岗位动机',q:'请做一个自我介绍，并说明为什么选择这个岗位？',rub:'评分要点：动机清晰、与岗位匹配、表达有条理；优秀回答会结合具体项目与量化结果说明选择理由。'},
+ {a:'tech',pill:'tech',who:'技术面试官',focus:'技术深度',q:'讲一个你参与过的后端项目，说说你在其中承担的技术决策。',rub:'评分要点：技术选型理由、权衡过程、可验证的结果；优秀回答会给出替代方案与选择依据。'},
+ {a:'pressure',pill:'prs',who:'压力面试官',focus:'抗压能力',q:'如果上线前发现你的方案有性能问题，但只剩两小时，你会怎么做？',rub:'评分要点：优先级判断、沟通方式、降级预案；优秀回答会明确止损标准与回滚方案。'},
+ {a:'hr',pill:'hr',who:'HR 面试官',focus:'团队协作',q:'描述一次你与队友意见分歧的经历，最后是怎么收敛的？',rub:'评分要点：冲突处理方式、证据与共识、复盘；优秀回答会说明自己改变了什么。'},
+ {a:'tech',pill:'tech',who:'技术面试官',focus:'系统设计',q:'请说明你在高并发场景下如何定位并解决性能瓶颈。',rub:'评分要点：监控指标、定位路径、优化手段与验证；优秀回答会给出量化前后对比。'},
+ {a:'pressure',pill:'prs',who:'压力面试官',focus:'沟通表达',q:'用一分钟向非技术同事解释你做过的最复杂的项目。',rub:'评分要点：类比是否贴切、结构是否清晰、是否避免术语堆砌；优秀回答会先讲价值再讲实现。'}
+];
+const SAMPLE_RES='广东工业大学 软件工程 本科（2022—2026）\n\n项目经历：\n1. 校园二手交易平台后端开发，使用 Spring Boot + MySQL，负责商品与订单模块，接口平均响应时间从 420ms 优化至 180ms，支撑日均 3000 次请求。\n2. 课程设计：基于 Python 的图书推荐系统，完成数据清洗与协同过滤算法，准确率提升 12%。\n\n技能：Java、Python、MySQL、Redis、Git；熟悉 RESTful API 设计与单元测试。';
+const SAMPLE_JD='后端开发实习生\n\n职责：参与服务端接口开发与维护，配合前端完成联调，编写单元测试与技术文档。\n\n要求：\n1. 熟悉 Java 或 Go，了解 Spring Boot 框架；\n2. 掌握 MySQL 基本使用与索引优化，了解 Redis 缓存；\n3. 具备良好的沟通表达与团队协作能力，能清晰描述项目中的技术决策；\n4. 有高并发或性能调优经验者优先。';
+let cur=0, turns=[], followed=false, done=false;
+
+function $(id){return document.getElementById(id)}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600)}
+function switchView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));$(v).classList.add('active');document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('active',['front','admin','rules'][i]===v));window.scrollTo({top:0,behavior:'smooth'})}
+function goStep(n){[1,2,3].forEach(i=>{$(`f${i}`).classList.toggle('hide',i!==n);const s=$(`s${i}`);s.className='step'+(i===n?' active':'')+(i<n?' done':'')})}
+function fill(k){if(k==='resume')$('resume').value=SAMPLE_RES;else $('jd').value=SAMPLE_JD;checkForm()}
+function checkForm(){const ok=$('resume').value.trim()&&$('jd').value.trim();$('startBtn').disabled=!ok;$('formHint').textContent=ok?'信息已就绪，可以开始面试':'填写简历和 JD 后即可开始面试';$('formHint').style.color=ok?'var(--green)':'var(--red)';$('resumeCnt').textContent=$('resume').value.length+' 字';$('jdCnt').textContent=$('jd').value.length+' 字'}
+function startInterview(){cur=0;turns=[];followed=false;done=false;renderQ();renderTurns();goStep(2);toast('面试官已读取简历与 JD，开始提问')}
+function renderQ(){const q=QUESTIONS[cur];$('whoPill').textContent=q.who;$('whoPill').className='pill '+q.pill;$('focusText').textContent='考察能力：'+q.focus;$('qText').textContent=q.q;$('rubricText').textContent=q.rub;$('followTag').textContent='';$('progText').textContent=`进度 ${cur+1}/${QUESTIONS.length} 题`;$('progBar').style.width=((cur+1)/QUESTIONS.length*100)+'%';$('answer').value='';$('ansHint').textContent=''}
+function submitAnswer(){
+ const v=$('answer').value.trim();
+ if(!v){$('ansHint').textContent='回答不能为空';$('ansHint').style.color='var(--red)';return}
+ if(v.length<8){$('ansHint').textContent='回答太短，请补充细节';$('ansHint').style.color='var(--red)';return}
+ if(/(报错|异常|堆栈|崩溃|转圈|API Key|系统卡住)/.test(v)&&v.length<30){$('ansHint').textContent='这像是在反馈系统问题，不计入评分，请重新作答';$('ansHint').style.color='var(--red)';return}
+ const q=QUESTIONS[cur];
+ if(!followed&&v.length<20){followed=true;$('followTag').innerHTML='<span class="pill warn">（追问）</span>';$('qText').textContent='你刚才的回答比较概括，能否补充一个具体数字或结果来验证？';$('ansHint').textContent='触发一次自适应追问：题号不前进';$('ansHint').style.color='var(--amber)';$('answer').value='';return}
+ turns.push({q:q.q,a:v,who:q.who,pill:q.pill,score:Math.max(2,Math.min(5,Math.round(v.length/22)+2))});
+ renderTurns();cur++;
+ if(cur>=QUESTIONS.length){goStep(3);toast('面试结束，已生成复盘报告')}else{renderQ();toast('已记录本题评分，进入下一题')}
+}
+function renderTurns(){if(!turns.length){$('turnList').innerHTML='<div class="hint">暂无作答记录</div>';return}
+ $('turnList').innerHTML=turns.map((t,i)=>`<div class="turn"><div class="t1"><span><span class="pill ${t.pill}">${t.who}</span> 第 ${i+1} 题</span><span>得分 ${t.score}/5</span></div><div class="t2">${t.q}</div><details><summary>查看依据与评语</summary><p>依据：${t.a.slice(0,60)}…　评语：${t.score>=4?'回答具体、有量化依据':'缺少可验证的结果，建议补充数据'}。</p></details></div>`).join('')}
+function resetAll(){goStep(1);$('resume').value='';$('jd').value='';checkForm();toast('会话已清空，回到录入页')}
+function adminTab(id,btn){['a1','a2','a3','a4'].forEach(x=>$(x).classList.toggle('hide',x!==id));document.querySelectorAll('.side button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function tg(e){e.classList.toggle('on')}
+const BANK=[
+ ['hr-01','通用','hr','为什么选择这个岗位？如果同时拿到其他方向的 offer，你会怎么排序？','岗位动机'],
+ ['hr-03','通用','hr','讲一次你和队友意见分歧的经历，最后是怎么收敛的？','团队协作 / 沟通表达'],
+ ['tech-02','互联网后端','tech','MySQL 索引失效的常见场景有哪些，你怎么排查慢 SQL？','技术深度 / 工程实践'],
+ ['tech-05','互联网后端','tech','介绍一次你做过的接口性能优化，前后指标差多少？','系统设计 / 数据意识'],
+ ['prs-04','互联网后端','pressure','线上故障半夜叫你起来，排查一小时没头绪，你怎么办？','抗压能力 / 问题解决'],
+ ['tech-08','互联网前端','tech','React 中列表渲染的 key 为什么不能用数组下标？','技术深度'],
+ ['hr-12','人工智能','hr','你怎么看待模型效果与业务指标不一致的情况？','数据意识 / 岗位动机'],
+ ['tech-16','人工智能','tech','说说 RAG 里召回与重排的关系，以及你怎么评估效果。','技术深度 / 系统设计'],
+ ['prs-11','数据分析','pressure','如果业务方不认可你的分析结论，你会怎么回应？','沟通表达 / 抗压能力'],
+ ['tech-22','软件测试','tech','如何设计一份覆盖边界条件的测试用例？','工程实践 / 问题解决'],
+ ['hr-19','金融科技','hr','你如何理解金融系统里的合规要求？','岗位动机 / 数据意识'],
+ ['prs-23','产品运营','pressure','产品数据连续两周下滑，老板让你今天给结论。','问题解决 / 抗压能力']
+];
+const AG={hr:'HR',tech:'技术',pressure:'压力'};
+function filterBank(){const ind=$('fIndustry').value,ag=$('fAgent').value,key=$('fKey').value.trim();
+ const rows=BANK.filter(r=>(!ind||r[1]===ind)&&(!ag||r[2]===ag)&&(!key||r[3].includes(key)||r[4].includes(key)));
+ $('bankBody').innerHTML=rows.length?rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${AG[r[2]]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join(''):'<tr><td colspan="5" class="hint">没有匹配的题目，请调整筛选条件</td></tr>';
+ $('bankCount').textContent=`当前显示 ${rows.length} 条样例（题库共 98 题）`}
+$('resume').addEventListener('input',checkForm);$('jd').addEventListener('input',checkForm);
+checkForm();filterBank();
+/* 支持 URL 参数直达指定页面，便于导出静态设计稿与在线预览深链接 */
+(function(){const p=new URLSearchParams(location.search);const v=p.get('view');if(v&&['front','admin','rules'].includes(v))switchView(v);
+ if(p.get('demo')==='1'){fill('resume');fill('jd');renderQ();}
+ const st=+p.get('step');if(st>=1&&st<=3)goStep(st);
+ const tab=p.get('tab');if(tab&&/^a[1-4]$/.test(tab)){const btns=document.querySelectorAll('.side button');adminTab(tab,btns[+tab.slice(1)-1]);}
+})();
+</script>
+</body>
+</html>
